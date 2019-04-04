@@ -3,6 +3,7 @@ package mquery
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type SelectQueryBuilder interface {
@@ -22,7 +23,7 @@ type SelectQueryBuilder interface {
 	// TODO: join
 }
 
-func Select(tableName string) SelectQueryBuilder {
+func NewSelectBuilder(tableName string) SelectQueryBuilder {
 	return &selectQueryBuidler{
 		tableName: tableName,
 	}
@@ -81,14 +82,7 @@ func (qb *selectQueryBuidler) Or(key string, value interface{}) SelectQueryBuild
 func (qb *selectQueryBuidler) In(col string, value ...interface{}) SelectQueryBuilder {
 	listValue := []string{}
 	for _, v := range value {
-		switch v.(type) {
-		case int, uint:
-			listValue = append(listValue, fmt.Sprintf("%d", v))
-		case string:
-			listValue = append(listValue, fmt.Sprintf(`"%s"`, v))
-		default:
-			panic("unimplement")
-		}
+		listValue = append(listValue, interfaceToString(v))
 	}
 	qb.and = append(qb.and, fmt.Sprintf("%s IN (%s)", col, strings.Join(listValue, ",")))
 	return qb
@@ -169,4 +163,16 @@ func toString(key string, value interface{}) string {
 		panic("unimplement ")
 	}
 	return query
+}
+func interfaceToString(value interface{}) string {
+	switch value.(type) {
+	case int, uint:
+		return fmt.Sprintf("%d", value)
+	case string:
+		return fmt.Sprintf("%s", value)
+	case time.Time:
+		return value.(time.Time).String()
+	default:
+		panic("unimplement")
+	}
 }
