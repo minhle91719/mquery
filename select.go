@@ -6,7 +6,8 @@ import (
 )
 
 type SelectQueryBuilder interface {
-	// database.Where
+	//QueryBuilder
+	Fields(col ...string) SelectQueryBuilder
 	And(key string, value interface{}) SelectQueryBuilder
 	Or(key string, value interface{}) SelectQueryBuilder
 	Limit(count int) SelectQueryBuilder
@@ -18,17 +19,18 @@ type SelectQueryBuilder interface {
 	// TODO: join
 }
 
-func Where(selectAll string) SelectQueryBuilder {
-	return &queryBuidler{
-		selectStmt: selectAll,
+func Select(tableName string) SelectQueryBuilder {
+	return &selectQueryBuidler{
+		tableName: tableName,
 	}
 }
 
-type queryBuidler struct {
-	selectStmt string
-	and        []string
-	or         []string
-	limit      struct {
+type selectQueryBuidler struct {
+	tableName string
+	fields    []string
+	and       []string
+	or        []string
+	limit     struct {
 		isUse  bool
 		offset int
 		count  int
@@ -40,57 +42,85 @@ type queryBuidler struct {
 	}
 }
 
-func (qb *queryBuidler) Search(col string, value string) SelectQueryBuilder {
+func (qb *selectQueryBuidler) Fields(col ...string) SelectQueryBuilder {
+	qb.fields = append(qb.fields, col...)
+	return qb
+}
+
+func (qb *selectQueryBuidler) Search(col string, value string) SelectQueryBuilder {
 	qb.and = append(qb.and, col+" like "+" '%"+value+"%'")
 	return qb
 }
 
-func (qb *queryBuidler) And(key string, value interface{}) SelectQueryBuilder {
+func (qb *selectQueryBuidler) And(key string, value interface{}) SelectQueryBuilder {
 	qb.and = append(qb.and, toString(key, value))
 	return qb
 }
 
-func (qb *queryBuidler) Or(key string, value interface{}) SelectQueryBuilder {
+func (qb *selectQueryBuidler) Or(key string, value interface{}) SelectQueryBuilder {
 	qb.or = append(qb.or, toString(key, value))
 	return qb
 }
 
-func (qb *queryBuidler) Limit(count int) SelectQueryBuilder {
+func (qb *selectQueryBuidler) Limit(count int) SelectQueryBuilder {
 	qb.limit.isUse = true
 	qb.limit.count = count
 	return qb
 }
-func (qb *queryBuidler) Offset(off int) SelectQueryBuilder {
+func (qb *selectQueryBuidler) Offset(off int) SelectQueryBuilder {
 	qb.limit.offset = off
 	return qb
 }
 
-func (qb *queryBuidler) OrderByASC(col string) SelectQueryBuilder {
+func (qb *selectQueryBuidler) OrderByASC(col string) SelectQueryBuilder {
 	qb.order.isUse = true
 	qb.order.mode = "ASC"
 	qb.order.col = col
 	return qb
 }
 
-func (qb *queryBuidler) OrderByDESC(col string) SelectQueryBuilder {
+func (qb *selectQueryBuidler) OrderByDESC(col string) SelectQueryBuilder {
 	qb.order.isUse = true
 	qb.order.mode = "DESC"
 	qb.order.col = col
 	return qb
 }
-func (qb queryBuidler) ToQuery() string {
-	query := qb.selectStmt + fmt.Sprintf(" where %s ",
-		strings.Join([]string{strings.Join(qb.and, " and "),
-			strings.Join(qb.or, " or ")}, " or "))
-
-	if qb.order.isUse {
-		query += fmt.Sprintf(" order by %s %s", qb.order.col, qb.order.mode)
+func (qb selectQueryBuidler) ToQuery() string {
+	var (
+		where = ""
+		field = ""
+	)
+	if len(qb.and) > 0 || len(qb.or) > 0 {
+		qw := ""
+		if and := strings.Join(qb.and, " and "); and != "" {
+			qw += and + " "
+		}
+		if or := strings.Join(qb.or, " or "); or != "" {
+			if qw != "" {
+				qw += "or " + or
+			} else {
+				qw = or
+			}
+		}
+		where = fmt.Sprintf("WHERE %s", qw)
+	}
+	if len(qb.fields) == 0 {
+		field = "*"
+	} else {
+		field = strings.Join(qb.fields, ",")
 	}
 
+	query := fmt.Sprintf("SELECT %s FROM %s %s", field, qb.tableName, where)
+	if qb.order.isUse {
+		query = strings.TrimRight(query, " ")
+		query += fmt.Sprintf(" ORDER BY %s %s", qb.order.col, qb.order.mode)
+	}
 	if qb.limit.isUse {
-		query += fmt.Sprintf(" limit %d,%d", qb.limit.offset, qb.limit.count)
+		query = strings.TrimRight(query, " ")
+		query += fmt.Sprintf(" LIMIT %d,%d", qb.limit.offset, qb.limit.count)
 	}
 	// TODO: Join
+	query = strings.TrimRight(query, " ")
 	return query
 }
 func toString(key string, value interface{}) string {
