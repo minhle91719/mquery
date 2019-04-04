@@ -1,7 +1,6 @@
 package mquery
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -45,6 +44,14 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 			name: "select order by ASC",
 			sqb:  Select("user").Fields("username", "password").OrderByASC("username"),
 			want: "SELECT username,password FROM user ORDER BY username ASC",
+		}, {
+			name: "select JOIN",
+			sqb:  Select("user").Fields("username", "password").Join("account", "id_user", "id_user").And("balance", 5),
+			want: "SELECT username,password FROM user JOIN account ON user.id_user = account.id_user WHERE balance = 5",
+		}, {
+			name: "select IN",
+			sqb:  Select("user").Fields("username", "password").In("id_user", 1, 2, 3, 4, 5),
+			want: "SELECT username,password FROM user WHERE id_user IN (1,2,3,4,5)",
 		},
 	}
 	for _, tt := range tests {
@@ -52,8 +59,6 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 			qb := tt.sqb
 			if got := qb.ToQuery(); got != tt.want {
 				t.Errorf("selectQueryBuidler.ToQuery() = %v, want %v", got, tt.want)
-			} else {
-				fmt.Println(got)
 			}
 		})
 	}
