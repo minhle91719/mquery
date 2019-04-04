@@ -1,4 +1,4 @@
-package database
+package mquery
 
 import (
 	"fmt"
@@ -79,17 +79,18 @@ func (qb *queryBuidler) OrderByDESC(col string) SelectQueryBuilder {
 	return qb
 }
 func (qb queryBuidler) ToQuery() string {
-	delim := "or"
-	if len(qb.and) == 0 || len(qb.or) == 0 {
-		delim = ""
-	}
-	query := qb.selectStmt + fmt.Sprintf(" where %s %s %s", strings.Join(qb.and, " and "), delim, strings.Join(qb.or, " or "))
+	query := qb.selectStmt + fmt.Sprintf(" where %s ",
+		strings.Join([]string{strings.Join(qb.and, " and "),
+			strings.Join(qb.or, " or ")}, " or "))
+
 	if qb.order.isUse {
 		query += fmt.Sprintf(" order by %s %s", qb.order.col, qb.order.mode)
 	}
+
 	if qb.limit.isUse {
 		query += fmt.Sprintf(" limit %d,%d", qb.limit.offset, qb.limit.count)
 	}
+	// TODO: Join
 	return query
 }
 func toString(key string, value interface{}) string {
