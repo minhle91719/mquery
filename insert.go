@@ -5,34 +5,55 @@ import (
 	"strings"
 )
 
+// TODO: binding map insert
 type InsertQueryBuilder interface {
+	// example:
+	// map de kiem tra tinh kha dung cua query sau chay check toan bo
+	Column(col ...string) InsertQueryBuilder
 	Value(value map[string]interface{}) InsertQueryBuilder
 
 	ToQuery() string
 }
 
 type insertQueryBuilder struct {
-	tableName string
-	col       []string
-	value     []interface{}
+	mapColValue map[string]interface{}
+
+	qb *queryBuilder
 }
 
-func NewInsertBuilder(tableName string) InsertQueryBuilder {
+func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
 	return &insertQueryBuilder{
-		tableName: tableName,
+		qb: qb,
 	}
 }
+func (iqb *insertQueryBuilder) Column(col ...string) InsertQueryBuilder {
+	for _, v := range col {
+		iqb.mapColValue[v] = 0 // init
+	}
+	return iqb
+}
+
 func (iqb *insertQueryBuilder) Value(mapValue map[string]interface{}) InsertQueryBuilder {
 	for k, v := range mapValue {
-		iqb.col = append(iqb.col, k)
-		iqb.value = append(iqb.value, v)
+		if !iqb.qb.colValid(k) {
+			panic("column not exist. Please check " + iqb.qb.tableName + " QueryBuilder")
+		}
+
+		key := strings.TrimLeft(k, ":")
+		if value, ok := iqb.mapColValue[key]; ok && value != nil {
+			iqb.mapColValue[key] = v
+		} else {
+			panic("cant find column : " + k)
+		}
 	}
 	return iqb
 }
 func (iqb *insertQueryBuilder) ToQuery() string {
+	listCol := []string{}
 	listValue := []string{}
-	for _, v := range iqb.value {
+	for k, v := range iqb.mapColValue {
+		listCol = append(listCol, k)
 		listValue = append(listValue, interfaceToString(v))
 	}
-	return fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s)", iqb.tableName, strings.Join(iqb.col, ","), strings.Join(listValue, ","))
+	return fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s)", iqb.qb.tableName, strings.Join(listCol, ","), strings.Join(listValue, ","))
 }
