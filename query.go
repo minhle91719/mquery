@@ -11,17 +11,12 @@ type QueryBuilder interface {
 type queryBuilder struct {
 	tableName string
 	col       map[string]bool
-
-	iqb InsertQueryBuilder
-	sqb SelectQueryBuilder
 }
 
 func NewTable(name string) QueryBuilder {
 	qb := &queryBuilder{
 		tableName: name,
 	}
-	qb.iqb = newInsertBuilder(qb)
-	qb.sqb = newSelectBuilder(qb)
 	return qb
 }
 func (qb *queryBuilder) Fields(mapCol map[string]bool) QueryBuilder {
@@ -29,10 +24,10 @@ func (qb *queryBuilder) Fields(mapCol map[string]bool) QueryBuilder {
 	return qb
 }
 func (qb *queryBuilder) InsertBuilder() InsertQueryBuilder {
-	return qb.iqb
+	return newInsertBuilder(qb)
 }
 func (qb *queryBuilder) SelectBuilder() SelectQueryBuilder {
-	return qb.sqb
+	return newSelectBuilder(qb)
 }
 func (qb queryBuilder) colValid(name string) bool {
 	if _, ok := qb.col[name]; ok {

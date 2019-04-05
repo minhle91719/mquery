@@ -55,7 +55,7 @@ type selectQueryBuidler struct {
 func (sqb *selectQueryBuidler) Fields(col ...string) SelectQueryBuilder {
 	for _, v := range col {
 		if sqb.qb.colValid(v) {
-			sqb.fields = append(sqb.fields, col...)
+			sqb.fields = append(sqb.fields, v)
 		} else {
 			panic("column " + v + " not exist . Please check " + sqb.qb.tableName + " QueryBuilder")
 		}
