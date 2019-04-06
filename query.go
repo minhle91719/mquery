@@ -12,7 +12,7 @@ type QueryBuilder interface {
 	WhereBuilder() WhereBuilder
 	UpdateBuilder() UpdateQueryBuilder
 
-	colValid(nameCol string) bool
+	colValid(nameCol string)
 }
 
 type IToQuery interface {
@@ -55,11 +55,11 @@ func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
 	return newUpdateBuilder(qb)
 }
 
-func (qb queryBuilder) colValid(name string) bool {
+func (qb queryBuilder) colValid(name string) {
 	if _, ok := qb.col[name]; ok {
-		return true
+		return
 	}
-	return false
+	panic("column " + name + " not exist . Please check " + qb.tableName + " QueryBuilder")
 }
 func toString(key string, ops Operator, value interface{}) string {
 	return fmt.Sprintf("%s %s %s", key, ops, interfaceToString(value))

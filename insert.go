@@ -20,19 +20,14 @@ type insertQueryBuilder struct {
 
 func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
 	return &insertQueryBuilder{
-		qb: qb,
+		qb:          qb,
+		mapColValue: make(map[string]interface{}),
 	}
 }
 func (iqb *insertQueryBuilder) Value(mapValue map[string]interface{}) InsertQueryBuilder {
 	for k, v := range mapValue {
-		if !iqb.qb.colValid(k) {
-			panic("column not exist. Please check " + iqb.qb.tableName + " QueryBuilder")
-		}
-		if value, ok := iqb.mapColValue[k]; ok && value != nil {
-			iqb.mapColValue[k] = v
-		} else {
-			panic("cant find column : " + k)
-		}
+		iqb.qb.colValid(k)
+		iqb.mapColValue[k] = v
 	}
 	return iqb
 }

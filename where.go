@@ -49,6 +49,8 @@ func newWhere(qb *queryBuilder) WhereBuilder {
 }
 
 func (wb *whereBuilder) Join(tableName, keyRoot, keyJoin string) WhereBuilder {
+	wb.qb.colValid(keyRoot)
+	wb.qb.colValid(keyJoin)
 	wb.join.isUse = true
 	wb.join.table = tableName
 	wb.join.keyRoot = keyRoot
@@ -56,21 +58,24 @@ func (wb *whereBuilder) Join(tableName, keyRoot, keyJoin string) WhereBuilder {
 	return wb
 }
 func (wb *whereBuilder) Search(col string, value string) WhereBuilder {
+	wb.qb.colValid(col)
 	wb.and = append(wb.and, col+" like "+" '%"+value+"%'")
 	return wb
 }
 
-func (wb *whereBuilder) And(key string, ops Operator, value interface{}) WhereBuilder {
-	wb.and = append(wb.and, toString(key, ops, value))
+func (wb *whereBuilder) And(col string, ops Operator, value interface{}) WhereBuilder {
+	wb.qb.colValid(col)
+	wb.and = append(wb.and, toString(col, ops, value))
 	return wb
 }
 
-func (wb *whereBuilder) Or(key string, ops Operator, value interface{}) WhereBuilder {
-	wb.or = append(wb.or, toString(key, ops, value))
+func (wb *whereBuilder) Or(col string, ops Operator, value interface{}) WhereBuilder {
+	wb.qb.colValid(col)
+	wb.or = append(wb.or, toString(col, ops, value))
 	return wb
 }
 func (wb *whereBuilder) In(col string, value ...interface{}) WhereBuilder {
-
+	wb.qb.colValid(col)
 	for _, v := range value {
 		if _, ok := v.(WhereBuilder); ok {
 			panic("dont use where build in here")
@@ -96,6 +101,7 @@ func (wb *whereBuilder) Offset(off int) WhereBuilder {
 }
 
 func (wb *whereBuilder) OrderByASC(col string) WhereBuilder {
+	wb.qb.colValid(col)
 	wb.order.isUse = true
 	wb.order.mode = "ASC"
 	wb.order.col = col
@@ -103,6 +109,7 @@ func (wb *whereBuilder) OrderByASC(col string) WhereBuilder {
 }
 
 func (wb *whereBuilder) OrderByDESC(col string) WhereBuilder {
+	wb.qb.colValid(col)
 	wb.order.isUse = true
 	wb.order.mode = "DESC"
 	wb.order.col = col

@@ -22,6 +22,9 @@ func newUpdateBuilder(qb *queryBuilder) UpdateQueryBuilder {
 	}
 }
 func (uqb *updateQueryBuilder) Value(mapValue map[string]interface{}) UpdateQueryBuilder {
+	for k := range mapValue {
+		uqb.qb.colValid(k)
+	}
 	uqb.mapValue = mapValue
 	return uqb
 }
@@ -29,13 +32,11 @@ func (uqb *updateQueryBuilder) Where(wb WhereBuilder) IToQuery {
 	uqb.where = wb.ToQuery()
 	return uqb
 }
-func (uqb updateQueryBuilder) ToQuery() string {
+func (uqb *updateQueryBuilder) ToQuery() string {
 	query := ""
 	listUpdate := []string{}
 	for k, v := range uqb.mapValue {
-		if !uqb.qb.colValid(k) {
-			panic("col " + k + " is not exist")
-		}
+		uqb.qb.colValid(k)
 		listUpdate = append(listUpdate, toString(k, Equal, v))
 	}
 	query = fmt.Sprintf("UPDATE %s SET %s %s", uqb.qb.tableName, strings.Join(listUpdate, ","), uqb.where)
