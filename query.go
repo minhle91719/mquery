@@ -50,7 +50,7 @@ func (qb *queryBuilder) SelectBuilder() SelectQueryBuilder {
 	return newSelectBuilder(qb)
 }
 func (qb *queryBuilder) WhereBuilder() WhereBuilder {
-	return newWhere(qb)
+	return newWhereBuidler(qb)
 }
 func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
 	return newUpdateBuilder(qb)

@@ -35,7 +35,7 @@ type whereBuilder struct {
 	}
 }
 
-func newWhere(qb *queryBuilder) WhereBuilder {
+func newWhereBuidler(qb *queryBuilder) WhereBuilder {
 	return &whereBuilder{
 		qb: qb,
 	}
