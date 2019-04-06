@@ -116,18 +116,17 @@ func (wb *whereBuilder) ToQuery() string {
 	}
 
 	if len(wb.and) > 0 || len(wb.or) > 0 {
-		qw := ""
+		qw := []string{}
 		if and := strings.Join(wb.and, " and "); and != "" {
-			qw += and + " "
+			qw = append(qw, and)
 		}
 		if or := strings.Join(wb.or, " or "); or != "" {
-			if qw != "" {
-				qw += "or " + or
-			} else {
-				qw = or
+			if len(qw) > 0 {
+				or = "or " + or
 			}
+			qw = append(qw, or)
 		}
-		query = append(query, fmt.Sprintf("WHERE %s", qw))
+		query = append(query, fmt.Sprintf("WHERE %s", strings.Join(qw, " ")))
 	}
 	if wb.order.isUse {
 		query = append(query, fmt.Sprintf("ORDER BY %s %s", wb.order.col, wb.order.mode))
