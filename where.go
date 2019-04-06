@@ -50,7 +50,6 @@ func newWhere(qb *queryBuilder) WhereBuilder {
 
 func (wb *whereBuilder) Join(tableName, keyRoot, keyJoin string) WhereBuilder {
 	wb.qb.colValid(keyRoot)
-	wb.qb.colValid(keyJoin)
 	wb.join.isUse = true
 	wb.join.table = tableName
 	wb.join.keyRoot = keyRoot
