@@ -14,7 +14,7 @@ type WhereBuilder interface {
 	OrderByASC(col string) WhereBuilder
 	OrderByDESC(col string) WhereBuilder
 	Search(col string, value string) WhereBuilder
-	Join(tableName, keyRoot, keyJoin string) WhereBuilder
+
 
 	IToQuery
 }
@@ -34,12 +34,7 @@ type whereBuilder struct {
 		col   string
 		mode  string // ASC or DESC
 	}
-	join struct {
-		isUse   bool
-		table   string
-		keyRoot string
-		keyJoin string
-	}
+	
 }
 
 func newWhere(qb *queryBuilder) WhereBuilder {
@@ -48,14 +43,7 @@ func newWhere(qb *queryBuilder) WhereBuilder {
 	}
 }
 
-func (wb *whereBuilder) Join(tableName, keyRoot, keyJoin string) WhereBuilder {
-	wb.qb.colValid(keyRoot)
-	wb.join.isUse = true
-	wb.join.table = tableName
-	wb.join.keyRoot = keyRoot
-	wb.join.keyJoin = keyJoin
-	return wb
-}
+
 func (wb *whereBuilder) Search(col string, value string) WhereBuilder {
 	wb.qb.colValid(col)
 	wb.and = append(wb.and, col+" like "+" '%"+value+"%'")

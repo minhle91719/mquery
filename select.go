@@ -8,6 +8,7 @@ import (
 type SelectQueryBuilder interface {
 	//QueryBuilder
 	Fields(col ...string) SelectQueryBuilder
+	Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
 	Where(wb WhereBuilder) IToQuery
 	IToQuery
 }
@@ -21,7 +22,12 @@ func newSelectBuilder(qBuilder *queryBuilder) SelectQueryBuilder {
 type selectQueryBuidler struct {
 	qb     *queryBuilder
 	fields []string
-
+	join   struct {
+		isUse   bool
+		table   string
+		keyRoot string
+		keyJoin string
+	}
 	where string
 }
 
@@ -31,6 +37,14 @@ func (sqb *selectQueryBuidler) Fields(col ...string) SelectQueryBuilder {
 		sqb.fields = append(sqb.fields, v)
 	}
 
+	return sqb
+}
+func (sqb *selectQueryBuidler) Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder {
+	sqb.qb.colValid(keyRoot)
+	sqb.join.isUse = true
+	sqb.join.table = tableName
+	sqb.join.keyRoot = keyRoot
+	sqb.join.keyJoin = keyJoin
 	return sqb
 }
 func (sqb *selectQueryBuidler) Where(wb WhereBuilder) IToQuery {
