@@ -7,9 +7,6 @@ import (
 
 // TODO: binding map insert
 type InsertQueryBuilder interface {
-	// example:
-	// map de kiem tra tinh kha dung cua query sau chay check toan bo
-	Column(col ...string) InsertQueryBuilder
 	Value(value map[string]interface{}) InsertQueryBuilder
 
 	IToQuery
@@ -26,22 +23,13 @@ func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
 		qb: qb,
 	}
 }
-func (iqb *insertQueryBuilder) Column(col ...string) InsertQueryBuilder {
-	for _, v := range col {
-		iqb.mapColValue[v] = 0 // init
-	}
-	return iqb
-}
-
 func (iqb *insertQueryBuilder) Value(mapValue map[string]interface{}) InsertQueryBuilder {
 	for k, v := range mapValue {
 		if !iqb.qb.colValid(k) {
 			panic("column not exist. Please check " + iqb.qb.tableName + " QueryBuilder")
 		}
-
-		key := strings.TrimLeft(k, ":")
-		if value, ok := iqb.mapColValue[key]; ok && value != nil {
-			iqb.mapColValue[key] = v
+		if value, ok := iqb.mapColValue[k]; ok && value != nil {
+			iqb.mapColValue[k] = v
 		} else {
 			panic("cant find column : " + k)
 		}
