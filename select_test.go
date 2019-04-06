@@ -12,7 +12,7 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 	})
 	tests := []struct {
 		name string
-		sqb  SelectQueryBuilder
+		sqb  IToQuery
 		want string
 	}{
 		{
@@ -27,35 +27,39 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 		},
 		{
 			name: "select where and",
-			sqb:  qb.SelectBuilder().Fields("username", "password").And("id", 5),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().And("id", Equal, 5)),
 			want: "SELECT username,password FROM user WHERE id = 5",
 		},
 		{
 			name: "select where or",
-			sqb:  qb.SelectBuilder().Fields("username", "password").Or("id", 5),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().Or("id", Equal, 5)),
 			want: "SELECT username,password FROM user WHERE id = 5",
 		},
 		{
 			name: "select where and or mix",
-			sqb:  qb.SelectBuilder().Fields("username", "password").And("id", 5).Or("username", "hahaha").And("password", "haha"),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().And("id", Equal, 5).Or("username", Equal, "hahaha").And("password", Equal, "haha")),
 			want: "SELECT username,password FROM user WHERE id = 5 and password = \"haha\" or username = \"hahaha\"",
 		},
 		{
 			name: "select order by ASC",
-			sqb:  qb.SelectBuilder().Fields("username", "password").OrderByASC("username"),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().OrderByASC("username")),
 			want: "SELECT username,password FROM user ORDER BY username ASC",
 		}, {
 			name: "select order by ASC",
-			sqb:  qb.SelectBuilder().Fields("username", "password").OrderByASC("username"),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().OrderByASC("username")),
 			want: "SELECT username,password FROM user ORDER BY username ASC",
 		}, {
 			name: "select JOIN",
-			sqb:  qb.SelectBuilder().Fields("username", "password").Join("account", "id_user", "id_user").And("balance", 5),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().Join("account", "id_user", "id_user").And("balance", Equal, 5)),
 			want: "SELECT username,password FROM user JOIN account ON user.id_user = account.id_user WHERE balance = 5",
 		}, {
 			name: "select IN",
-			sqb:  qb.SelectBuilder().Fields("username", "password").In("id_user", 1, 2, 3, 4, 5),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().In("id_user", 1, 2, 3, 4, 5)),
 			want: "SELECT username,password FROM user WHERE id_user IN (1,2,3,4,5)",
+		}, {
+			name: "select IN Nested",
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().In("id_user", qb.SelectBuilder().Fields("id").Where(qb.WhereBuilder().And("id", Equal, 5)))),
+			want: "SELECT username,password FROM user WHERE id_user IN (SELECT id FROM user WHERE id = 5)",
 		},
 	}
 	for _, tt := range tests {

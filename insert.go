@@ -12,7 +12,7 @@ type InsertQueryBuilder interface {
 	Column(col ...string) InsertQueryBuilder
 	Value(value map[string]interface{}) InsertQueryBuilder
 
-	ToQuery() string
+	IToQuery
 }
 
 type insertQueryBuilder struct {
