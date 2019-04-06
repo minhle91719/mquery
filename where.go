@@ -76,14 +76,12 @@ func (wb *whereBuilder) Or(col string, ops Operator, value interface{}) WhereBui
 }
 func (wb *whereBuilder) In(col string, value ...interface{}) WhereBuilder {
 	wb.qb.colValid(col)
+	listValue := []string{}
+
 	for _, v := range value {
 		if _, ok := v.(WhereBuilder); ok {
 			panic("dont use where build in here")
 		}
-	}
-
-	listValue := []string{}
-	for _, v := range value {
 		listValue = append(listValue, interfaceToString(v))
 	}
 	wb.and = append(wb.and, fmt.Sprintf("%s IN (%s)", col, strings.Join(listValue, ",")))
