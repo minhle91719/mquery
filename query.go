@@ -2,6 +2,7 @@ package mquery
 
 import (
 	"fmt"
+	"html"
 	"time"
 )
 
@@ -65,16 +66,18 @@ func toString(key string, ops Operator, value interface{}) string {
 	return fmt.Sprintf("%s %s %s", key, ops, interfaceToString(value))
 }
 func interfaceToString(value interface{}) string {
+	result := ""
 	switch value.(type) {
 	case int, uint:
-		return fmt.Sprintf("%d", value)
+		result = fmt.Sprintf("%d", value)
 	case string:
-		return fmt.Sprintf(`"%s"`, value)
+		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
 	case time.Time:
-		return value.(time.Time).String()
+		result = value.(time.Time).String()
 	case SelectQueryBuilder, WhereBuilder:
-		return fmt.Sprintf("%s", value.(IToQuery).ToQuery())
+		result = fmt.Sprintf("%s", value.(IToQuery).ToQuery())
 	default:
 		panic("unimplement")
 	}
+	return result
 }
