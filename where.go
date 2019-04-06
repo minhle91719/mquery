@@ -5,6 +5,20 @@ import (
 	"strings"
 )
 
+type WhereBuilder interface {
+	And(key string, ops Operator, value interface{}) WhereBuilder
+	Or(key string, ops Operator, value interface{}) WhereBuilder
+	In(col string, value ...interface{}) WhereBuilder
+
+	Limit(count int) WhereBuilder
+	OrderByASC(col string) WhereBuilder
+	OrderByDESC(col string) WhereBuilder
+	Search(col string, value string) WhereBuilder
+	Join(tableName, keyRoot, keyJoin string) WhereBuilder
+
+	IToQuery
+}
+
 type whereBuilder struct {
 	qb *queryBuilder
 
@@ -34,20 +48,6 @@ func newWhere(qb *queryBuilder) WhereBuilder {
 	}
 }
 
-type WhereBuilder interface {
-	And(key string, ops Operator, value interface{}) WhereBuilder
-	Or(key string, ops Operator, value interface{}) WhereBuilder
-	In(col string, value ...interface{}) WhereBuilder
-
-	Limit(count int) WhereBuilder
-	OrderByASC(col string) WhereBuilder
-	OrderByDESC(col string) WhereBuilder
-	Search(col string, value string) WhereBuilder
-	Join(tableName, keyRoot, keyJoin string) WhereBuilder
-
-	IToQuery
-}
-
 func (wb *whereBuilder) Join(tableName, keyRoot, keyJoin string) WhereBuilder {
 	wb.join.isUse = true
 	wb.join.table = tableName
@@ -70,11 +70,10 @@ func (wb *whereBuilder) Or(key string, ops Operator, value interface{}) WhereBui
 	return wb
 }
 func (wb *whereBuilder) In(col string, value ...interface{}) WhereBuilder {
-	if len(value) > 2 {
-		for _, v := range value {
-			if _, ok := v.(WhereBuilder); ok {
-				panic("2 in")
-			}
+
+	for _, v := range value {
+		if _, ok := v.(WhereBuilder); ok {
+			panic("dont use where build in here")
 		}
 	}
 

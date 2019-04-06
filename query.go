@@ -10,7 +10,7 @@ type QueryBuilder interface {
 	InsertBuilder() InsertQueryBuilder
 	SelectBuilder() SelectQueryBuilder
 	WhereBuilder() WhereBuilder
-	// UpdateBuilder()
+	UpdateBuilder() UpdateQueryBuilder
 
 	colValid(nameCol string) bool
 }
@@ -51,6 +51,10 @@ func (qb *queryBuilder) SelectBuilder() SelectQueryBuilder {
 func (qb *queryBuilder) WhereBuilder() WhereBuilder {
 	return newWhere(qb)
 }
+func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
+	return newUpdateBuilder(qb)
+}
+
 func (qb queryBuilder) colValid(name string) bool {
 	if _, ok := qb.col[name]; ok {
 		return true
@@ -68,8 +72,8 @@ func interfaceToString(value interface{}) string {
 		return fmt.Sprintf(`"%s"`, value)
 	case time.Time:
 		return value.(time.Time).String()
-	case SelectQueryBuilder:
-		return fmt.Sprintf("%s", value.(SelectQueryBuilder).ToQuery())
+	case SelectQueryBuilder, WhereBuilder:
+		return fmt.Sprintf("%s", value.(IToQuery).ToQuery())
 	default:
 		panic("unimplement")
 	}
