@@ -54,7 +54,7 @@ func (sqb *selectQueryBuidler) Where(wb WhereBuilder) IToQuery {
 
 func (sqb *selectQueryBuidler) ToQuery() string {
 	var (
-		query = ""
+		query = []string{}
 		field = ""
 	)
 	if len(sqb.fields) == 0 {
@@ -62,6 +62,12 @@ func (sqb *selectQueryBuidler) ToQuery() string {
 	} else {
 		field = strings.Join(sqb.fields, ",")
 	}
-	query = fmt.Sprintf("SELECT %s FROM %s", field, sqb.qb.tableName) + " " + sqb.where
-	return strings.TrimRight(query, " ")
+	query = append(query, fmt.Sprintf("SELECT %s FROM %s", field, sqb.qb.tableName))
+	if sqb.join.isUse {
+		query = append(query, fmt.Sprintf("JOIN %s ON %s.%s = %s.%s", sqb.join.table, sqb.qb.tableName, sqb.join.keyRoot, sqb.join.table, sqb.join.keyJoin))
+	}
+	if sqb.where != "" {
+		query = append(query, sqb.where)
+	}
+	return strings.Join(query, " ")
 }

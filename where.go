@@ -15,7 +15,6 @@ type WhereBuilder interface {
 	OrderByDESC(col string) WhereBuilder
 	Search(col string, value string) WhereBuilder
 
-
 	IToQuery
 }
 
@@ -34,7 +33,6 @@ type whereBuilder struct {
 		col   string
 		mode  string // ASC or DESC
 	}
-	
 }
 
 func newWhere(qb *queryBuilder) WhereBuilder {
@@ -42,7 +40,6 @@ func newWhere(qb *queryBuilder) WhereBuilder {
 		qb: qb,
 	}
 }
-
 
 func (wb *whereBuilder) Search(col string, value string) WhereBuilder {
 	wb.qb.colValid(col)
@@ -103,10 +100,6 @@ func (wb *whereBuilder) OrderByDESC(col string) WhereBuilder {
 
 func (wb *whereBuilder) ToQuery() string {
 	query := []string{}
-	if wb.join.isUse {
-		query = append(query, fmt.Sprintf("JOIN %s ON %s.%s = %s.%s", wb.join.table, wb.qb.tableName, wb.join.keyRoot, wb.join.table, wb.join.keyJoin))
-	}
-
 	if len(wb.and) > 0 || len(wb.or) > 0 {
 		qw := []string{}
 		if and := strings.Join(wb.and, " and "); and != "" {
