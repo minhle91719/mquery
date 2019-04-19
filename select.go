@@ -9,7 +9,7 @@ type SelectQueryBuilder interface {
 	//QueryBuilder
 	Fields(col ...string) SelectQueryBuilder
 	//Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
-	CountWithDistict(colName, asName string) SelectQueryBuilder
+	//CountWithDistict(colName, asName string) SelectQueryBuilder
 
 	Where(wb WhereBuilder) IToQuery
 

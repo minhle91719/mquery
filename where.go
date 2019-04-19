@@ -13,7 +13,7 @@ type WhereBuilder interface {
 	Limit(count int) WhereBuilder
 	OrderByASC(col string) WhereBuilder
 	OrderByDESC(col string) WhereBuilder
-	OrderByCase(listPriority ...string) WhereBuilder // uu tien giam dan
+	// OrderByCase(listPriority ...string) WhereBuilder // uu tien giam dan
 	Like(col string, value string) WhereBuilder
 
 	IToQuery
