@@ -9,7 +9,10 @@ type SelectQueryBuilder interface {
 	//QueryBuilder
 	Fields(col ...string) SelectQueryBuilder
 	//Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
+	CountWithDistict(colName, asName string) SelectQueryBuilder
+
 	Where(wb WhereBuilder) IToQuery
+
 	IToQuery
 }
 
@@ -22,12 +25,15 @@ func newSelectBuilder(qBuilder *queryBuilder) SelectQueryBuilder {
 type selectQueryBuidler struct {
 	qb     *queryBuilder
 	fields []string
-	// join   struct {
-	// 	isUse   bool
-	// 	table   string
-	// 	keyRoot string
-	// 	keyJoin string
-	// }
+	count  struct {
+		isUse   bool
+		colName string
+		asName  string
+	}
+	distinct struct {
+		isUse   bool
+		colName string
+	}
 	where string
 }
 

@@ -13,7 +13,8 @@ type WhereBuilder interface {
 	Limit(count int) WhereBuilder
 	OrderByASC(col string) WhereBuilder
 	OrderByDESC(col string) WhereBuilder
-	Search(col string, value string) WhereBuilder
+	OrderByCase(listPriority ...string) WhereBuilder // uu tien giam dan
+	Like(col string, value string) WhereBuilder
 
 	IToQuery
 }
@@ -41,7 +42,7 @@ func newWhereBuidler(qb *queryBuilder) WhereBuilder {
 	}
 }
 
-func (wb *whereBuilder) Search(col string, value string) WhereBuilder {
+func (wb *whereBuilder) Like(col string, value string) WhereBuilder {
 	wb.qb.colValid(col)
 	wb.and = append(wb.and, col+" like "+" '%"+value+"%'")
 	return wb

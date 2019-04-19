@@ -23,9 +23,10 @@ type IToQuery interface {
 type Operator string
 
 const (
-	Equal   Operator = "="
-	Less    Operator = "<"
-	Greater Operator = ">"
+	Equal    Operator = "="
+	Less     Operator = "<"
+	Greater  Operator = ">"
+	NotEqual Operator = "<>"
 )
 
 type queryBuilder struct {
@@ -68,7 +69,7 @@ func toString(key string, ops Operator, value interface{}) string {
 func interfaceToString(value interface{}) string {
 	result := ""
 	switch value.(type) {
-	case int, uint:
+	case int, uint, bool:
 		result = fmt.Sprintf("%d", value)
 	case string:
 		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
