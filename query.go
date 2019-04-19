@@ -69,7 +69,7 @@ func toString(key string, ops Operator, value interface{}) string {
 func interfaceToString(value interface{}) string {
 	result := ""
 	switch value.(type) {
-	case int, uint, bool:
+	case int, uint:
 		result = fmt.Sprintf("%d", value)
 	case string:
 		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
@@ -77,6 +77,8 @@ func interfaceToString(value interface{}) string {
 		result = value.(time.Time).String()
 	case SelectQueryBuilder, WhereBuilder:
 		result = fmt.Sprintf("%s", value.(IToQuery).ToQuery())
+	case bool:
+		result = fmt.Sprint(value)
 	default:
 		panic("unimplement")
 	}

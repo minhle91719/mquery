@@ -7,6 +7,7 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 		"id":       false,
 		"username": true,
 		"password": true,
+		"boolss":   true,
 	})
 	tests := []struct {
 		name string
@@ -18,6 +19,7 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 			iqb: qb.InsertBuilder().Value(map[string]interface{}{
 				"username": "minhle",
 				"password": "deptrai",
+				"boolss":   true,
 			}),
 			want: `INSERT INTO user(username,password) VALUES("minhle","deptrai")`,
 		},
