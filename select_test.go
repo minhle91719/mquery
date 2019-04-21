@@ -57,7 +57,7 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 		// },
 		{
 			name: "select IN",
-			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().In("id", 1, 2, 3, 4, 5)),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().In("id", []interface{}{1, 2, 3, 4, 5})),
 			want: "SELECT username,password FROM user WHERE id IN (1,2,3,4,5)",
 		}, {
 			name: "select IN Nested",
