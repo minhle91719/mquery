@@ -7,36 +7,32 @@ import (
 
 // TODO: binding map insert
 type InsertQueryBuilder interface {
-	Value(value map[string]interface{}) InsertQueryBuilder
-
-	IToQuery
+	Value(value ...string) IToQuery
 }
 
 type insertQueryBuilder struct {
-	mapColValue map[string]interface{}
-
+	colValue []string
+	
 	qb *queryBuilder
 }
 
 func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
 	return &insertQueryBuilder{
-		qb:          qb,
-		mapColValue: make(map[string]interface{}),
+		qb: qb,
 	}
 }
-func (iqb *insertQueryBuilder) Value(mapValue map[string]interface{}) InsertQueryBuilder {
-	for k, v := range mapValue {
-		iqb.qb.colValid(k)
-		iqb.mapColValue[k] = v
-	}
+func (iqb *insertQueryBuilder) Value(value ...string) IToQuery {
+	iqb.colValue = value
 	return iqb
 }
 func (iqb *insertQueryBuilder) ToQuery() string {
-	listCol := []string{}
-	listValue := []string{}
-	for k, v := range iqb.mapColValue {
-		listCol = append(listCol, k)
-		listValue = append(listValue, interfaceToString(v))
+	return fmt.Sprintf("INSERT INTO %s(%s) VALUE(%s)", iqb.qb.tableName, strings.Join(iqb.colValue, ","), genValueParam(len(iqb.colValue)))
+}
+
+func genValueParam(length int) (value string) {
+	listValue := make([]string, 0, length)
+	for i := 0; i < length; i++ {
+		listValue = append(listValue, "?")
 	}
-	return fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s)", iqb.qb.tableName, strings.Join(listCol, ","), strings.Join(listValue, ","))
+	return strings.Join(listValue, ",")
 }

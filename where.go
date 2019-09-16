@@ -6,34 +6,51 @@ import (
 )
 
 type WhereBuilder interface {
-	And(key string, ops Operator, value interface{}) WhereBuilder
-	Or(key string, ops Operator, value interface{}) WhereBuilder
-	In(col string, value ...interface{}) WhereBuilder
-
-	Limit(count int) WhereBuilder
+	Condition(condition Condition) WhereBuilder
+	Limit() WhereBuilder
 	OrderByASC(col string) WhereBuilder
 	OrderByDESC(col string) WhereBuilder
 	// OrderByCase(listPriority ...string) WhereBuilder // uu tien giam dan
-	Like(col string, value string) WhereBuilder
-
+	Having(condition Condition) WhereBuilder
+	GroupBy(col string) WhereBuilder
 	IToQuery
 }
 
 type whereBuilder struct {
 	qb *queryBuilder
-
-	and   []string
-	or    []string
-	limit struct {
-		isUse  bool
-		offset int
-		count  int
-	}
-	order struct {
+	
+	condition string
+	limit     bool
+	orderBy   struct {
 		isUse bool
 		col   string
 		mode  string // ASC or DESC
 	}
+	having struct {
+		isUse     bool
+		condition string
+	}
+	groupBy struct {
+		isUse bool
+		col   string
+	}
+}
+
+func (wb *whereBuilder) Condition(condition Condition) WhereBuilder {
+	wb.condition = condition.ToCondititonString()
+	return wb
+}
+
+func (wb *whereBuilder) Having(condition Condition) WhereBuilder {
+	wb.having.isUse = true
+	wb.having.condition = condition.ToCondititonString()
+	return wb
+}
+
+func (wb *whereBuilder) GroupBy(col string) WhereBuilder {
+	wb.groupBy.isUse = true
+	wb.groupBy.col = col
+	return wb
 }
 
 func newWhereBuidler(qb *queryBuilder) WhereBuilder {
@@ -42,90 +59,43 @@ func newWhereBuidler(qb *queryBuilder) WhereBuilder {
 	}
 }
 
-func (wb *whereBuilder) Like(col string, value string) WhereBuilder {
-	wb.qb.colValid(col)
-	wb.and = append(wb.and, col+" like "+" '%"+value+"%'")
-	return wb
-}
-
-func (wb *whereBuilder) And(col string, ops Operator, value interface{}) WhereBuilder {
-	wb.qb.colValid(col)
-	wb.and = append(wb.and, toString(col, ops, value))
-	return wb
-}
-
-func (wb *whereBuilder) Or(col string, ops Operator, value interface{}) WhereBuilder {
-	wb.qb.colValid(col)
-	wb.or = append(wb.or, toString(col, ops, value))
-	return wb
-}
-func (wb *whereBuilder) In(col string, value ...interface{}) WhereBuilder {
-
-	wb.qb.colValid(col)
-	listValue := []string{}
-
-	for _, v := range value {
-		if _, ok := v.(WhereBuilder); ok {
-			panic("dont use where build in here")
-		}
-		if list, ok := v.([]interface{}); ok {
-			for _, v1 := range list {
-				listValue = append(listValue, interfaceToString(v1))
-			}
-		} else {
-			listValue = append(listValue, interfaceToString(v))
-		}
-	}
-	wb.and = append(wb.and, fmt.Sprintf("%s IN (%s)", col, strings.Join(listValue, ",")))
-	return wb
-}
-
-func (wb *whereBuilder) Limit(count int) WhereBuilder {
-	wb.limit.isUse = true
-	wb.limit.count = count
-	return wb
-}
-func (wb *whereBuilder) Offset(off int) WhereBuilder {
-	wb.limit.offset = off
+func (wb *whereBuilder) Limit() WhereBuilder {
+	wb.limit = true
 	return wb
 }
 
 func (wb *whereBuilder) OrderByASC(col string) WhereBuilder {
 	wb.qb.colValid(col)
-	wb.order.isUse = true
-	wb.order.mode = "ASC"
-	wb.order.col = col
+	wb.orderBy.isUse = true
+	wb.orderBy.mode = "ASC"
+	wb.orderBy.col = col
 	return wb
 }
 
 func (wb *whereBuilder) OrderByDESC(col string) WhereBuilder {
 	wb.qb.colValid(col)
-	wb.order.isUse = true
-	wb.order.mode = "DESC"
-	wb.order.col = col
+	wb.orderBy.isUse = true
+	wb.orderBy.mode = "DESC"
+	wb.orderBy.col = col
 	return wb
 }
 
 func (wb *whereBuilder) ToQuery() string {
 	query := []string{}
-	if len(wb.and) > 0 || len(wb.or) > 0 {
-		qw := []string{}
-		if and := strings.Join(wb.and, " and "); and != "" {
-			qw = append(qw, and)
-		}
-		if or := strings.Join(wb.or, " or "); or != "" {
-			if len(qw) > 0 {
-				or = "or " + or
-			}
-			qw = append(qw, or)
-		}
-		query = append(query, fmt.Sprintf("WHERE %s", strings.Join(qw, " ")))
+	if wb.condition != "" {
+		query = append(query, "WHERE "+wb.condition)
 	}
-	if wb.order.isUse {
-		query = append(query, fmt.Sprintf("ORDER BY %s %s", wb.order.col, wb.order.mode))
+	if wb.having.isUse {
+		query = append(query, wb.having.condition)
 	}
-	if wb.limit.isUse {
-		query = append(query, fmt.Sprintf("LIMIT %d,%d", wb.limit.offset, wb.limit.count))
+	if wb.groupBy.isUse {
+		query = append(query, fmt.Sprintf("GROUP BY %s", wb.groupBy.col))
+	}
+	if wb.orderBy.isUse {
+		query = append(query, fmt.Sprintf("ORDER BY %s %s", wb.orderBy.col, wb.orderBy.mode))
+	}
+	if wb.limit {
+		query = append(query, "LIMIT ?,?")
 	}
 	return strings.Join(query, " ")
 }

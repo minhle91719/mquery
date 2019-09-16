@@ -6,14 +6,21 @@ import (
 )
 
 type UpdateQueryBuilder interface {
-	Value(map[string]interface{}) UpdateQueryBuilder
+	Values(mapValue map[string]interface{}) UpdateQueryBuilder
+	Fields(listField ...string) UpdateQueryBuilder
 	Where(wb WhereBuilder) IToQuery
 	IToQuery
 }
 type updateQueryBuilder struct {
-	qb       *queryBuilder
-	mapValue map[string]interface{}
-	where    string // TODO: using WHERE Select
+	qb      *queryBuilder
+	listCol []string
+	field   map[string]interface{}
+	where   string // TODO: using WHERE Select
+}
+
+func (uqb *updateQueryBuilder) Values(mapValue map[string]interface{}) UpdateQueryBuilder {
+	uqb.field = mapValue
+	return uqb
 }
 
 func newUpdateBuilder(qb *queryBuilder) UpdateQueryBuilder {
@@ -21,11 +28,11 @@ func newUpdateBuilder(qb *queryBuilder) UpdateQueryBuilder {
 		qb: qb,
 	}
 }
-func (uqb *updateQueryBuilder) Value(mapValue map[string]interface{}) UpdateQueryBuilder {
-	for k := range mapValue {
-		uqb.qb.colValid(k)
+func (uqb *updateQueryBuilder) Fields(mapValue ...string) UpdateQueryBuilder {
+	for _, v := range mapValue {
+		uqb.qb.colValid(v)
 	}
-	uqb.mapValue = mapValue
+	uqb.listCol = mapValue
 	return uqb
 }
 func (uqb *updateQueryBuilder) Where(wb WhereBuilder) IToQuery {
@@ -33,12 +40,19 @@ func (uqb *updateQueryBuilder) Where(wb WhereBuilder) IToQuery {
 	return uqb
 }
 func (uqb *updateQueryBuilder) ToQuery() string {
-	query := ""
-	listUpdate := []string{}
-	for k, v := range uqb.mapValue {
-		uqb.qb.colValid(k)
+	var (
+		query      []string
+		listUpdate []string
+	)
+	for _, v := range uqb.listCol {
+		listUpdate = append(listUpdate, toString(v, Equal, nil))
+	}
+	for k, v := range uqb.field {
 		listUpdate = append(listUpdate, toString(k, Equal, v))
 	}
-	query = fmt.Sprintf("UPDATE %s SET %s %s", uqb.qb.tableName, strings.Join(listUpdate, ","), uqb.where)
-	return strings.TrimRight(query, " ")
+	query = append(query, fmt.Sprintf("UPDATE %s SET %s", uqb.qb.tableName, strings.Join(listUpdate, ",")))
+	if uqb.where != "" {
+		query = append(query, uqb.where)
+	}
+	return strings.TrimSpace(strings.Join(query, " "))
 }

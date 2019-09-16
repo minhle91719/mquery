@@ -16,11 +16,7 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 	}{
 		{
 			name: "insert",
-			iqb: qb.InsertBuilder().Value(map[string]interface{}{
-				"username": "minhle",
-				"password": "deptrai",
-				"boolss":   true,
-			}),
+			iqb:  qb.InsertBuilder().Value("username", "password"),
 			want: `INSERT INTO user(username,password) VALUES("minhle","deptrai")`,
 		},
 	}

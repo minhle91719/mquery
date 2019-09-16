@@ -3,6 +3,7 @@ package mquery
 import (
 	"fmt"
 	"html"
+	"strings"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type QueryBuilder interface {
 	SelectBuilder() SelectQueryBuilder
 	WhereBuilder() WhereBuilder
 	UpdateBuilder() UpdateQueryBuilder
-
+	
 	colValid(nameCol string)
 }
 
@@ -23,10 +24,12 @@ type IToQuery interface {
 type Operator string
 
 const (
-	Equal    Operator = "="
-	Less     Operator = "<"
-	Greater  Operator = ">"
-	NotEqual Operator = "<>"
+	Equal            Operator = "="
+	Less             Operator = "<"
+	GreaterThanEqual Operator = ">="
+	LessThanEqual    Operator = "<="
+	Greater          Operator = ">"
+	NotEqual         Operator = "<>"
 )
 
 type queryBuilder struct {
@@ -58,6 +61,8 @@ func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
 }
 
 func (qb queryBuilder) colValid(name string) {
+	replacer := strings.NewReplacer("distinct", "", "max", "", "(", "", ")", "")
+	name = replacer.Replace(name)
 	if _, ok := qb.col[name]; ok {
 		return
 	}
@@ -79,6 +84,8 @@ func interfaceToString(value interface{}) string {
 		result = fmt.Sprintf("%s", value.(IToQuery).ToQuery())
 	case bool:
 		result = fmt.Sprint(value)
+	case nil:
+		result = "?"
 	default:
 		panic("unimplement")
 	}

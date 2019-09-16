@@ -16,26 +16,24 @@ func Test_updateQueryBuilder_ToQuery(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name: "update all",
-			uqb: qb.UpdateBuilder().Value(map[string]interface{}{
-				"username": "haha",
-				"password": 5,
-			}),
-			want: "UPDATE user SET username = \"haha\",password = 5",
+			uqb:  qb.UpdateBuilder().Fields("username", "password"),
+			want: "UPDATE user SET username = ?,password = ?",
 		},
 		{
 			name: "update where",
-			uqb: qb.UpdateBuilder().Value(map[string]interface{}{
+			uqb: qb.UpdateBuilder().Values(map[string]interface{}{
 				"username": "haha",
 				"password": 5,
-			}).Where(qb.WhereBuilder().And("id", Equal, 5)),
+			}).Where(qb.WhereBuilder().Condition(NewCondition().And("id", Equal, 5))),
 			want: "UPDATE user SET username = \"haha\",password = 5 WHERE id = 5",
 		}, {
 			name: "update where nested",
-			uqb: qb.UpdateBuilder().Value(map[string]interface{}{
+			want: `UPDATE user SET username = "haha",password = 5 WHERE id = 5 AND (id) IN (SELECT id FROM user WHERE id < 5)`,
+			uqb: qb.UpdateBuilder().Values(map[string]interface{}{
 				"username": "haha",
 				"password": 5,
-			}).Where(qb.WhereBuilder().And("id", Equal, 5).In("id", qb.SelectBuilder().Where(qb.WhereBuilder().And("id", Less, 5)))),
-			want: `UPDATE user SET username = "haha",password = 5 WHERE id = 5 and id IN (SELECT * FROM user WHERE id < 5)`,
+			}).Where(qb.WhereBuilder().Condition(NewCondition().And("id", Equal, 5).
+				In(qb.SelectBuilder().Fields("id").Where(qb.WhereBuilder().Condition(NewCondition().And("id", Less, 5))).ToQuery(), "id"))),
 		},
 	}
 	for _, tt := range tests {

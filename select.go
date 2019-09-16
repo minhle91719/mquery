@@ -10,9 +10,9 @@ type SelectQueryBuilder interface {
 	Fields(col ...string) SelectQueryBuilder
 	//Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
 	//CountWithDistict(colName, asName string) SelectQueryBuilder
-
+	
 	Where(wb WhereBuilder) IToQuery
-
+	
 	IToQuery
 }
 
@@ -42,7 +42,7 @@ func (sqb *selectQueryBuidler) Fields(col ...string) SelectQueryBuilder {
 		sqb.qb.colValid(v)
 		sqb.fields = append(sqb.fields, v)
 	}
-
+	
 	return sqb
 }
 
@@ -61,20 +61,17 @@ func (sqb *selectQueryBuidler) Where(wb WhereBuilder) IToQuery {
 
 func (sqb *selectQueryBuidler) ToQuery() string {
 	var (
-		query = []string{}
+		query = make([]string, 0, len(sqb.fields)+2)
 		field = ""
 	)
 	if len(sqb.fields) == 0 {
-		field = "*"
+		return ""
 	} else {
 		field = strings.Join(sqb.fields, ",")
 	}
 	query = append(query, fmt.Sprintf("SELECT %s FROM %s", field, sqb.qb.tableName))
-	// if sqb.join.isUse {
-	// 	query = append(query, fmt.Sprintf("JOIN %s ON %s.%s = %s.%s", sqb.join.table, sqb.qb.tableName, sqb.join.keyRoot, sqb.join.table, sqb.join.keyJoin))
-	// }
 	if sqb.where != "" {
 		query = append(query, sqb.where)
 	}
-	return strings.Join(query, " ")
+	return strings.TrimSpace(strings.Join(query, " "))
 }
