@@ -5,13 +5,17 @@ import (
 )
 
 func Test_selectQueryBuidler_ToQuery(t *testing.T) {
-	qb := NewTable("user").Fields(map[string]bool{
-		"id":               true,
-		"username":         true,
-		"password":         true,
-		"balance":          false,
-		"id_order_logging": true,
-		"id_order":         true, "status": true, "created_at": true,
+	qb := NewTable("user").Fields([]string{
+		"id",
+		"username",
+		"password",
+		"balance",
+		"id_order_logging",
+		"id_order",
+		"status",
+		"created_at",
+		"updated_at",
+		"deleted_at",
 	})
 	tests := []struct {
 		name string
@@ -49,15 +53,15 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 		},
 		{
 			name: "select JOIN",
-			sqb: qb.SelectBuilder().Fields("id_order_logging", "id_order", "status", "created_at").
-				Where(qb.WhereBuilder().Condition(NewCondition().In(qb.SelectBuilder().Fields("distinct(id_order)", "max(created_at)").
+			sqb: qb.SelectBuilder().NotCheckFieldValid().Fields("id_order_logging", "id_order", "status", "created_at").
+				Where(qb.WhereBuilder().Condition(NewCondition().In(qb.SelectBuilder().Fields("DISTINCT(id_order)", "MAX(created_at)").
 					Where(qb.WhereBuilder().GroupBy("id_order")).ToQuery(), "id_order", "created_at").And("status", Equal, "retry"))),
 			want: "SELECT id_order_logging,id_order,status,created_at FROM user WHERE " +
 				"(id_order,created_at) IN (SELECT distinct(id_order),max(created_at) FROM user GROUP BY id_order) AND status = \"retry\"",
 		},
 		{
 			name: "select IN",
-			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().Condition(NewCondition().In("1,2,3,4,5", "id"))),
+			sqb:  qb.SelectBuilder().Fields("username", "password").Where(qb.WhereBuilder().Condition(NewCondition().In("?", "id")).Condition(NewCondition().Like("haha"))),
 			want: "SELECT username,password FROM user WHERE (id) IN (1,2,3,4,5)",
 		}, {
 			name: "select IN Nested",

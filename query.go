@@ -8,7 +8,7 @@ import (
 )
 
 type QueryBuilder interface {
-	Fields(col map[string]bool) QueryBuilder // col name and not null
+	Fields(col []string) QueryBuilder // col name and not null
 	InsertBuilder() InsertQueryBuilder
 	SelectBuilder() SelectQueryBuilder
 	WhereBuilder() WhereBuilder
@@ -30,11 +30,19 @@ const (
 	LessThanEqual    Operator = "<="
 	Greater          Operator = ">"
 	NotEqual         Operator = "<>"
+	
+	Like Operator = "LIKE"
+)
+
+var (
+	mapFuncSql = map[string]struct{}{
+		"now()": struct{}{},
+	}
 )
 
 type queryBuilder struct {
 	tableName string
-	col       map[string]bool
+	col       []string
 }
 
 func NewTable(name string) QueryBuilder {
@@ -43,7 +51,7 @@ func NewTable(name string) QueryBuilder {
 	}
 	return qb
 }
-func (qb *queryBuilder) Fields(mapCol map[string]bool) QueryBuilder {
+func (qb *queryBuilder) Fields(mapCol []string) QueryBuilder {
 	qb.col = mapCol
 	return qb
 }
@@ -60,15 +68,20 @@ func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
 	return newUpdateBuilder(qb)
 }
 
-func (qb queryBuilder) colValid(name string) {
-	replacer := strings.NewReplacer("distinct", "", "max", "", "(", "", ")", "")
-	name = replacer.Replace(name)
-	if _, ok := qb.col[name]; ok {
-		return
+func (qb *queryBuilder) colValid(name string) {
+	name = replaceToken.Replace(name)
+	for _, v := range qb.col {
+		if v == name {
+			return
+		}
 	}
 	panic("column " + name + " not exist . Please check " + qb.tableName + " QueryBuilder")
 }
 func toString(key string, ops Operator, value interface{}) string {
+	// check Key
+	if _, ok := mapFuncSql[strings.ToLower(fmt.Sprint(value))]; ok {
+		return fmt.Sprintf("%s %s %s", key, ops, strings.ToLower(fmt.Sprint(value)))
+	}
 	return fmt.Sprintf("%s %s %s", key, ops, interfaceToString(value))
 }
 func interfaceToString(value interface{}) string {
@@ -87,7 +100,7 @@ func interfaceToString(value interface{}) string {
 	case nil:
 		result = "?"
 	default:
-		panic("unimplement")
+		return fmt.Sprint(value)
 	}
 	return result
 }

@@ -7,13 +7,19 @@ import (
 
 // TODO: binding map insert
 type InsertQueryBuilder interface {
-	Value(value ...string) IToQuery
+	Ignore() InsertQueryBuilder
+	Value(value ...interface{}) IToQuery
 }
 
 type insertQueryBuilder struct {
 	colValue []string
-	
-	qb *queryBuilder
+	ignore   bool
+	qb       *queryBuilder
+}
+
+func (iqb *insertQueryBuilder) Ignore() InsertQueryBuilder {
+	iqb.ignore = true
+	return iqb
 }
 
 func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
@@ -21,12 +27,18 @@ func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
 		qb: qb,
 	}
 }
-func (iqb *insertQueryBuilder) Value(value ...string) IToQuery {
-	iqb.colValue = value
+func (iqb *insertQueryBuilder) Value(value ...interface{}) IToQuery {
+	for _, v := range value {
+		iqb.colValue = append(iqb.colValue, fmt.Sprint(v))
+	}
 	return iqb
 }
 func (iqb *insertQueryBuilder) ToQuery() string {
-	return fmt.Sprintf("INSERT INTO %s(%s) VALUE(%s)", iqb.qb.tableName, strings.Join(iqb.colValue, ","), genValueParam(len(iqb.colValue)))
+	first := "INSERT INTO"
+	if iqb.ignore {
+		first = "INSERT IGNORE INTO"
+	}
+	return fmt.Sprintf("%s %s(%s) VALUE(%s)", first, iqb.qb.tableName, strings.Join(iqb.colValue, ","), genValueParam(len(iqb.colValue)))
 }
 
 func genValueParam(length int) (value string) {

@@ -7,15 +7,22 @@ import (
 
 type UpdateQueryBuilder interface {
 	Values(mapValue map[string]interface{}) UpdateQueryBuilder
+	NotCheckField() UpdateQueryBuilder
 	Fields(listField ...string) UpdateQueryBuilder
 	Where(wb WhereBuilder) IToQuery
 	IToQuery
 }
 type updateQueryBuilder struct {
-	qb      *queryBuilder
-	listCol []string
-	field   map[string]interface{}
-	where   string // TODO: using WHERE Select
+	qb           *queryBuilder
+	isCheckField bool
+	listCol      []string
+	field        map[string]interface{}
+	where        string // TODO: using WHERE Select
+}
+
+func (uqb *updateQueryBuilder) NotCheckField() UpdateQueryBuilder {
+	uqb.isCheckField = false
+	return uqb
 }
 
 func (uqb *updateQueryBuilder) Values(mapValue map[string]interface{}) UpdateQueryBuilder {
@@ -25,13 +32,17 @@ func (uqb *updateQueryBuilder) Values(mapValue map[string]interface{}) UpdateQue
 
 func newUpdateBuilder(qb *queryBuilder) UpdateQueryBuilder {
 	return &updateQueryBuilder{
-		qb: qb,
+		qb:           qb,
+		isCheckField: true,
 	}
 }
 func (uqb *updateQueryBuilder) Fields(mapValue ...string) UpdateQueryBuilder {
-	for _, v := range mapValue {
-		uqb.qb.colValid(v)
+	if uqb.isCheckField {
+		for _, v := range mapValue {
+			uqb.qb.colValid(v)
+		}
 	}
+	
 	uqb.listCol = mapValue
 	return uqb
 }

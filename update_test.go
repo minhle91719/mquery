@@ -3,10 +3,11 @@ package mquery
 import "testing"
 
 func Test_updateQueryBuilder_ToQuery(t *testing.T) {
-	qb := NewTable("user").Fields(map[string]bool{
-		"id":       true,
-		"username": true,
-		"password": true,
+	qb := NewTable("user").Fields([]string{
+		"id",
+		"username",
+		"password",
+		"balance",
 	})
 	tests := []struct {
 		name string

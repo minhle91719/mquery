@@ -7,7 +7,8 @@ import (
 
 type SelectQueryBuilder interface {
 	//QueryBuilder
-	Fields(col ...string) SelectQueryBuilder
+	Fields(col ...interface{}) SelectQueryBuilder
+	NotCheckFieldValid() SelectQueryBuilder
 	//Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
 	//CountWithDistict(colName, asName string) SelectQueryBuilder
 	
@@ -18,14 +19,16 @@ type SelectQueryBuilder interface {
 
 func newSelectBuilder(qBuilder *queryBuilder) SelectQueryBuilder {
 	return &selectQueryBuidler{
-		qb: qBuilder,
+		qb:           qBuilder,
+		isCheckField: true,
 	}
 }
 
 type selectQueryBuidler struct {
-	qb     *queryBuilder
-	fields []string
-	count  struct {
+	qb           *queryBuilder
+	isCheckField bool
+	fields       []string
+	count        struct {
 		isUse   bool
 		colName string
 		asName  string
@@ -37,10 +40,21 @@ type selectQueryBuidler struct {
 	where string
 }
 
-func (sqb *selectQueryBuidler) Fields(col ...string) SelectQueryBuilder {
+func (sqb *selectQueryBuidler) NotCheckFieldValid() SelectQueryBuilder {
+	sqb.isCheckField = false
+	return sqb
+}
+
+func (sqb *selectQueryBuidler) Fields(col ...interface{}) SelectQueryBuilder {
+	if len(col) == 1 && col[0] == "*" {
+		sqb.fields = append(sqb.fields, sqb.qb.col...)
+		return sqb
+	}
 	for _, v := range col {
-		sqb.qb.colValid(v)
-		sqb.fields = append(sqb.fields, v)
+		if sqb.isCheckField {
+			sqb.qb.colValid(fmt.Sprint(v))
+		}
+		sqb.fields = append(sqb.fields, fmt.Sprint(v))
 	}
 	
 	return sqb

@@ -19,7 +19,7 @@ type WhereBuilder interface {
 type whereBuilder struct {
 	qb *queryBuilder
 	
-	condition string
+	condition []string
 	limit     bool
 	orderBy   struct {
 		isUse bool
@@ -37,7 +37,7 @@ type whereBuilder struct {
 }
 
 func (wb *whereBuilder) Condition(condition Condition) WhereBuilder {
-	wb.condition = condition.ToCondititonString()
+	wb.condition = append(wb.condition, condition.ToCondititonString())
 	return wb
 }
 
@@ -82,8 +82,8 @@ func (wb *whereBuilder) OrderByDESC(col string) WhereBuilder {
 
 func (wb *whereBuilder) ToQuery() string {
 	query := []string{}
-	if wb.condition != "" {
-		query = append(query, "WHERE "+wb.condition)
+	if wb.condition != nil {
+		query = append(query, "WHERE "+strings.Join(wb.condition, " AND "))
 	}
 	if wb.having.isUse {
 		query = append(query, wb.having.condition)
