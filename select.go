@@ -9,8 +9,7 @@ type SelectQueryBuilder interface {
 	//QueryBuilder
 	Fields(col ...interface{}) SelectQueryBuilder
 	NotCheckFieldValid() SelectQueryBuilder
-	//Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder
-	//CountWithDistict(colName, asName string) SelectQueryBuilder
+	Count() SelectQueryBuilder
 	
 	Where(wb WhereBuilder) IToQuery
 	
@@ -28,16 +27,11 @@ type selectQueryBuidler struct {
 	qb           *queryBuilder
 	isCheckField bool
 	fields       []string
-	count        struct {
-		isUse   bool
-		colName string
-		asName  string
-	}
-	distinct struct {
-		isUse   bool
-		colName string
-	}
-	where string
+	where        string
+}
+
+func (sqb *selectQueryBuidler) Count() SelectQueryBuilder {
+	return sqb.NotCheckFieldValid().Fields(Count("1"))
 }
 
 func (sqb *selectQueryBuidler) NotCheckFieldValid() SelectQueryBuilder {
@@ -60,14 +54,6 @@ func (sqb *selectQueryBuidler) Fields(col ...interface{}) SelectQueryBuilder {
 	return sqb
 }
 
-// func (sqb *selectQueryBuidler) Join(tableName, keyRoot, keyJoin string) SelectQueryBuilder {
-// 	sqb.qb.colValid(keyRoot)
-// 	sqb.join.isUse = true
-// 	sqb.join.table = tableName
-// 	sqb.join.keyRoot = keyRoot
-// 	sqb.join.keyJoin = keyJoin
-// 	return sqb
-// }
 func (sqb *selectQueryBuidler) Where(wb WhereBuilder) IToQuery {
 	sqb.where = wb.ToQuery()
 	return sqb
@@ -87,5 +73,8 @@ func (sqb *selectQueryBuidler) ToQuery() string {
 	if sqb.where != "" {
 		query = append(query, sqb.where)
 	}
+	sqb.isCheckField = false
+	sqb.fields = nil
+	sqb.where = ""
 	return strings.TrimSpace(strings.Join(query, " "))
 }

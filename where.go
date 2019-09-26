@@ -97,5 +97,13 @@ func (wb *whereBuilder) ToQuery() string {
 	if wb.limit {
 		query = append(query, "LIMIT ?,?")
 	}
+	wb.orderBy.isUse = false
+	wb.orderBy.col = ""
+	wb.groupBy.isUse = false
+	wb.groupBy.col = ""
+	wb.having.isUse = false
+	wb.having.condition = ""
+	wb.condition = nil
+	wb.limit = false
 	return strings.Join(query, " ")
 }

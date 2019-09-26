@@ -14,6 +14,7 @@ type InsertQueryBuilder interface {
 type insertQueryBuilder struct {
 	colValue []string
 	ignore   bool
+	values   bool
 	qb       *queryBuilder
 }
 
