@@ -5,47 +5,65 @@ import (
 	"strings"
 )
 
-// TODO: binding map insert
-type InsertQueryBuilder interface {
-	Ignore() InsertQueryBuilder
-	Value(value ...interface{}) IToQuery
+type insert struct {
+	table    tableQuery
+	field    []string
+	isIgnore bool
+	isValues bool
+	rows     int64
 }
 
-type insertQueryBuilder struct {
-	colValue []string
-	ignore   bool
-	values   bool
-	qb       *queryBuilder
+func (iq insert) ToQuery() string {
+	var (
+		valueQuery = "VALUE"
+		insertType = "INSERT"
+	)
+	if iq.isIgnore {
+		insertType = "INSERT IGNORE"
+	}
+	value := genValueParam(len(iq.field))
+	var values = make([]string, 0, iq.rows)
+	values = append(values, value)
+	if iq.isValues {
+		valueQuery = "VALUES"
+		for i := int64(0); i < iq.rows-1; i++ {
+			values = append(values, value)
+		}
+	}
+	q := fmt.Sprintf("%s INTO %s(%s) %s%s", insertType, iq.table.tableName, strings.Join(iq.field, ","), valueQuery, strings.Join(values, ","))
+	if iq.table.isLogger {
+		iq.table.logger.Infof(q)
+	}
+	return q
 }
 
-func (iqb *insertQueryBuilder) Ignore() InsertQueryBuilder {
-	iqb.ignore = true
-	return iqb
+type InsertOption func(i *insert)
+
+func WithField(field ...interface{}) InsertOption {
+	return func(i *insert) {
+		for _, v := range field {
+			f := fmt.Sprintf("%v", v)
+			i.table.colValid(f)
+			i.field = append(i.field, f)
+		}
+	}
+}
+func WithValues(rows int64) InsertOption {
+	return func(i *insert) {
+		i.isValues = true
+		i.rows = rows
+	}
+}
+func WithIgnore() InsertOption {
+	return func(i *insert) {
+		i.isIgnore = true
+	}
 }
 
-func newInsertBuilder(qb *queryBuilder) InsertQueryBuilder {
-	return &insertQueryBuilder{
-		qb: qb,
+func newInsert(table tableQuery, options []InsertOption) toQuery {
+	i := &insert{table: table}
+	for _, setter := range options {
+		setter(i)
 	}
-}
-func (iqb *insertQueryBuilder) Value(value ...interface{}) IToQuery {
-	for _, v := range value {
-		iqb.colValue = append(iqb.colValue, fmt.Sprint(v))
-	}
-	return iqb
-}
-func (iqb *insertQueryBuilder) ToQuery() string {
-	first := "INSERT INTO"
-	if iqb.ignore {
-		first = "INSERT IGNORE INTO"
-	}
-	return fmt.Sprintf("%s %s(%s) VALUE(%s)", first, iqb.qb.tableName, strings.Join(iqb.colValue, ","), genValueParam(len(iqb.colValue)))
-}
-
-func genValueParam(length int) (value string) {
-	listValue := make([]string, 0, length)
-	for i := 0; i < length; i++ {
-		listValue = append(listValue, "?")
-	}
-	return strings.Join(listValue, ",")
+	return i
 }

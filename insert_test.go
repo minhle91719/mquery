@@ -3,21 +3,24 @@ package mquery
 import "testing"
 
 func Test_insertQueryBuilder_ToQuery(t *testing.T) {
-	qb := NewTable("user").Fields([]string{
-		"id",
+	qb := NewQueryBuilder("user", Column("id",
 		"username",
 		"password",
-		"balance",
-	})
+		"balance"))
 	tests := []struct {
 		name string
-		iqb  IToQuery
+		iqb  toQuery
 		want string
 	}{
 		{
-			name: "insert",
-			iqb:  qb.InsertBuilder().Value("username", "password"),
-			want: `INSERT INTO user(username,password) VALUES("minhle","deptrai")`,
+			name: "insert value",
+			iqb:  qb.Insert(WithField("username", "password")),
+			want: `INSERT INTO user(username,password) VALUE(?,?)`,
+		},
+		{
+			name: "insert 2 value",
+			iqb:  qb.Insert(WithField("username", "password"),WithValues(2)),
+			want: `INSERT INTO user(username,password) VALUES(?,?),(?,?)`,
 		},
 	}
 	for _, tt := range tests {

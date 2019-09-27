@@ -5,65 +5,42 @@ import (
 	"strings"
 )
 
-type UpdateQueryBuilder interface {
-	Values(mapValue map[string]interface{}) UpdateQueryBuilder
-	NotCheckField() UpdateQueryBuilder
-	Fields(listField ...string) UpdateQueryBuilder
-	Where(wb WhereBuilder) IToQuery
-	IToQuery
-}
-type updateQueryBuilder struct {
-	qb           *queryBuilder
-	isCheckField bool
-	listCol      []string
-	field        map[string]interface{}
-	where        string // TODO: using WHERE Select
+type updateQueryBuild struct {
+	table tableQuery
+	col   []string
+	field map[string]string
 }
 
-func (uqb *updateQueryBuilder) NotCheckField() UpdateQueryBuilder {
-	uqb.isCheckField = false
-	return uqb
-}
+type UpdateOption func(uq *updateQueryBuild)
 
-func (uqb *updateQueryBuilder) Values(mapValue map[string]interface{}) UpdateQueryBuilder {
-	uqb.field = mapValue
-	return uqb
-}
-
-func newUpdateBuilder(qb *queryBuilder) UpdateQueryBuilder {
-	return &updateQueryBuilder{
-		qb:           qb,
-		isCheckField: true,
-	}
-}
-func (uqb *updateQueryBuilder) Fields(mapValue ...string) UpdateQueryBuilder {
-	if uqb.isCheckField {
-		for _, v := range mapValue {
-			uqb.qb.colValid(v)
+func UpdateField(colName interface{}, value interface{}) UpdateOption {
+	return func(uq *updateQueryBuild) {
+		uq.table.colValid(colName)
+		column := fmt.Sprintf("%v", colName)
+		if value == nil {
+			uq.col = append(uq.col, column)
+		} else {
+			uq.field[column] = interfaceToString(value)
 		}
 	}
-	
-	uqb.listCol = mapValue
-	return uqb
 }
-func (uqb *updateQueryBuilder) Where(wb WhereBuilder) IToQuery {
-	uqb.where = wb.ToQuery()
-	return uqb
+func (u *updateQueryBuild) ToQuery() string {
+	var values = make([]string, 0, len(u.field))
+	for _, v := range u.col {
+		values = append(values, fmt.Sprintf("%s = ?", v))
+	}
+	for k, v := range u.field {
+		values = append(values, fmt.Sprintf("%s = %s", k, v))
+	}
+	return fmt.Sprintf("UPDATE %s SET %s", u.table.tableName, strings.Join(values, ","))
 }
-func (uqb *updateQueryBuilder) ToQuery() string {
-	var (
-		query      []string
-		listUpdate []string
-	)
-	for _, v := range uqb.listCol {
-		listUpdate = append(listUpdate, toString(v, Equal, nil))
+func newUpdateQuery(tb tableQuery, opts []UpdateOption) *updateQueryBuild {
+	u := &updateQueryBuild{table: tb, field: make(map[string]string)}
+	for _, setter := range opts {
+		setter(u)
 	}
-	for k, v := range uqb.field {
-		listUpdate = append(listUpdate, toString(k, Equal, v))
-	}
-	query = append(query, fmt.Sprintf("UPDATE %s SET %s", uqb.qb.tableName, strings.Join(listUpdate, ",")))
-	if uqb.where != "" {
-		query = append(query, uqb.where)
-	}
-	return strings.TrimSpace(strings.Join(query, " "))
+	return u
+}
+func (u *updateQueryBuild) Where(opts ...WhereOption) toQuery {
+	return newWhereQuery(u.table, u.ToQuery(), opts)
 }

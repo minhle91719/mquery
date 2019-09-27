@@ -3,38 +3,32 @@ package mquery
 import "testing"
 
 func Test_updateQueryBuilder_ToQuery(t *testing.T) {
-	qb := NewTable("user").Fields([]string{
+	qb := NewQueryBuilder("user", Column(
 		"id",
 		"username",
 		"password",
-		"balance",
-	})
+		"balance"))
 	tests := []struct {
 		name string
-		uqb  IToQuery
+		uqb  toQuery
 		want string
 	}{
 		// TODO: Add test cases.
 		{
 			name: "update all",
-			uqb:  qb.UpdateBuilder().Fields("username", "password"),
+			uqb:  qb.Update(UpdateField("username", nil), UpdateField("password", nil)).Where(),
 			want: "UPDATE user SET username = ?,password = ?",
 		},
 		{
 			name: "update where",
-			uqb: qb.UpdateBuilder().Values(map[string]interface{}{
-				"username": "haha",
-				"password": 5,
-			}).Where(qb.WhereBuilder().Condition(NewCondition().And("id", Equal, 5))),
+			uqb:  qb.Update(UpdateField("username", "haha"), UpdateField("password", 5)).Where(Condition(And("id", EqualOps, 5))),
 			want: "UPDATE user SET username = \"haha\",password = 5 WHERE id = 5",
 		}, {
 			name: "update where nested",
 			want: `UPDATE user SET username = "haha",password = 5 WHERE id = 5 AND (id) IN (SELECT id FROM user WHERE id < 5)`,
-			uqb: qb.UpdateBuilder().Values(map[string]interface{}{
-				"username": "haha",
-				"password": 5,
-			}).Where(qb.WhereBuilder().Condition(NewCondition().And("id", Equal, 5).
-				In(qb.SelectBuilder().Fields("id").Where(qb.WhereBuilder().Condition(NewCondition().And("id", Less, 5))).ToQuery(), "id"))),
+			uqb: qb.Update(UpdateField("username", "haha"), UpdateField("password", 5)).Where(
+				Condition(And("id", EqualOps, 5), In(qb.Select(SelectField("id")).Where(Condition(And("id", LessOps, 5))).ToQuery(), "id")),
+			),
 		},
 	}
 	for _, tt := range tests {

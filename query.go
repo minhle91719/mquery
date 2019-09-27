@@ -2,105 +2,81 @@ package mquery
 
 import (
 	"fmt"
-	"html"
-	"strings"
-	"time"
+	"github.com/sirupsen/logrus"
 )
 
-type QueryBuilder interface {
-	Fields(col []string) QueryBuilder // col name and not null
-	InsertBuilder() InsertQueryBuilder
-	SelectBuilder() SelectQueryBuilder
-	WhereBuilder() WhereBuilder
-	UpdateBuilder() UpdateQueryBuilder
-	
-	colValid(nameCol string)
-}
-
-type IToQuery interface {
-	ToQuery() string
-}
-
-type Operator string
-
-const (
-	Equal            Operator = "="
-	Less             Operator = "<"
-	GreaterThanEqual Operator = ">="
-	LessThanEqual    Operator = "<="
-	Greater          Operator = ">"
-	NotEqual         Operator = "<>"
-	
-	Like Operator = "LIKE"
-)
-
-var (
-	mapFuncSql = map[string]struct{}{
-		"now()": struct{}{},
-	}
-)
-
-type queryBuilder struct {
+type tableQuery struct {
+	column    []string
 	tableName string
-	col       []string
+	isLogger  bool
+	logger    *logrus.Entry
 }
 
-func NewTable(name string) QueryBuilder {
-	qb := &queryBuilder{
-		tableName: name,
-	}
-	return qb
-}
-func (qb *queryBuilder) Fields(mapCol []string) QueryBuilder {
-	qb.col = mapCol
-	return qb
-}
-func (qb *queryBuilder) InsertBuilder() InsertQueryBuilder {
-	return newInsertBuilder(qb)
-}
-func (qb *queryBuilder) SelectBuilder() SelectQueryBuilder {
-	return newSelectBuilder(qb)
-}
-func (qb *queryBuilder) WhereBuilder() WhereBuilder {
-	return newWhereBuidler(qb)
-}
-func (qb *queryBuilder) UpdateBuilder() UpdateQueryBuilder {
-	return newUpdateBuilder(qb)
+func (tb tableQuery) Select(opts ...SelectOption) WhereQuery {
+	return newSelect(tb, opts)
 }
 
-func (qb *queryBuilder) colValid(name string) {
-	name = replaceToken.Replace(name)
-	for _, v := range qb.col {
-		if v == name {
+func (tb tableQuery) Update(opts ...UpdateOption) WhereQuery {
+	return newUpdateQuery(tb, opts)
+}
+
+func (tb tableQuery) colValid(name interface{}) {
+	col := fmt.Sprintf("%v", name)
+	col = replaceToken.Replace(col)
+	for _, v := range tb.column {
+		if v == col {
 			return
 		}
 	}
-	panic("column " + name + " not exist . Please check " + qb.tableName + " QueryBuilder")
+	panic("column " + col + " not exist . Please check " + tb.tableName + " QueryBuilder")
 }
-func toString(key string, ops Operator, value interface{}) string {
-	// check Key
-	if _, ok := mapFuncSql[strings.ToLower(fmt.Sprint(value))]; ok {
-		return fmt.Sprintf("%s %s %s", key, ops, strings.ToLower(fmt.Sprint(value)))
-	}
-	return fmt.Sprintf("%s %s %s", key, ops, interfaceToString(value))
+func (tb tableQuery) Insert(options ...InsertOption) toQuery {
+	return newInsert(tb, options)
 }
-func interfaceToString(value interface{}) string {
-	result := ""
-	switch value.(type) {
-	case int, uint:
-		result = fmt.Sprintf("%d", value)
-	case string:
-		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
-	case time.Time:
-		result = value.(time.Time).String()
-	case SelectQueryBuilder, WhereBuilder:
-		result = fmt.Sprintf("%s", value.(IToQuery).ToQuery())
-	case bool:
-		result = fmt.Sprint(value)
-	case nil:
-		result = "?"
-	default:
-		return fmt.Sprint(value)
+func (tb tableQuery) logQuery(q string) {
+	if tb.isLogger {
+		tb.logger.WithFields(logrus.Fields{
+			"table": tb.tableName,
+			"query": q,
+		}).Info("mquery")
 	}
-	return result
+}
+
+type TableOption func(q *tableQuery)
+
+func Column(value ...interface{}) TableOption {
+	return func(q *tableQuery) {
+		for _, v := range value {
+			q.column = append(q.column, fmt.Sprintf("%v", v))
+		}
+	}
+}
+
+func WithLogger(l *logrus.Entry) TableOption {
+	return func(q *tableQuery) {
+		q.isLogger = true
+		q.logger = l
+	}
+}
+
+func NewQueryBuilder(tableName string, options ...TableOption) QueryBuild {
+	q := &tableQuery{tableName: tableName}
+	for _, setter := range options {
+		setter(q)
+	}
+	return q
+}
+
+type QueryBuild interface {
+	Insert(opts ...InsertOption) toQuery
+	Select(opts ...SelectOption) WhereQuery
+	Update(opts ...UpdateOption) WhereQuery
+}
+
+type WhereQuery interface {
+	Where(...WhereOption) toQuery
+}
+
+type toQuery interface {
+	ToQuery() string
 }

@@ -5,26 +5,21 @@ import (
 	"strings"
 )
 
-type WhereBuilder interface {
-	Condition(condition Condition) WhereBuilder
-	Limit() WhereBuilder
-	OrderByASC(col string) WhereBuilder
-	OrderByDESC(col string) WhereBuilder
-	// OrderByCase(listPriority ...string) WhereBuilder // uu tien giam dan
-	Having(condition Condition) WhereBuilder
-	GroupBy(col string) WhereBuilder
-	IToQuery
-}
-
-type whereBuilder struct {
-	qb *queryBuilder
+type whereQueryBuild struct {
+	table tableQuery
 	
+	prefix    string
 	condition []string
-	limit     bool
-	orderBy   struct {
+	
+	limit struct {
+		isUse  bool
+		offset int64
+		size   int64
+	}
+	orderBy struct {
 		isUse bool
 		col   string
-		mode  string // ASC or DESC
+		mode  OrderByMode // ASC or DESC
 	}
 	having struct {
 		isUse     bool
@@ -36,74 +31,89 @@ type whereBuilder struct {
 	}
 }
 
-func (wb *whereBuilder) Condition(condition Condition) WhereBuilder {
-	wb.condition = append(wb.condition, condition.ToCondititonString())
-	return wb
+func (w whereQueryBuild) ToQuery() string {
+	var query = make([]string, 0, 6)
+	query = append(query, w.prefix)
+	if w.condition != nil {
+		query = append(query, "WHERE "+strings.Join(w.condition, " AND "))
+	}
+	if w.having.isUse {
+		query = append(query, w.having.condition)
+	}
+	if w.groupBy.isUse {
+		query = append(query, fmt.Sprintf("GROUP BY %s", w.groupBy.col))
+	}
+	if w.orderBy.isUse {
+		query = append(query, fmt.Sprintf("ORDER BY %s %s", w.orderBy.col, w.orderBy.mode))
+	}
+	if w.limit.isUse {
+		query = append(query, fmt.Sprintf("LIMIT %d,%d", w.limit.offset, w.limit.size))
+	}
+	q := strings.Join(query, " ")
+	w.table.logQuery(q)
+	return q
 }
 
-func (wb *whereBuilder) Having(condition Condition) WhereBuilder {
-	wb.having.isUse = true
-	wb.having.condition = condition.ToCondititonString()
-	return wb
-}
+type WhereOption func(wb *whereQueryBuild)
 
-func (wb *whereBuilder) GroupBy(col string) WhereBuilder {
-	wb.groupBy.isUse = true
-	wb.groupBy.col = col
-	return wb
+func Limit(offset, size int64) WhereOption {
+	return func(wb *whereQueryBuild) {
+		wb.limit.isUse = true
+		wb.limit.offset = offset
+		wb.limit.size = size
+	}
 }
-
-func newWhereBuidler(qb *queryBuilder) WhereBuilder {
-	return &whereBuilder{
-		qb: qb,
+func Condition(conOpt ...ConditionOption) WhereOption {
+	return func(wb *whereQueryBuild) {
+		con := &conditionQuery{table: wb.table}
+		for _, setter := range conOpt {
+			setter(con)
+		}
+		wb.condition = append(wb.condition, con.ToQuery())
+	}
+}
+func Having(colName string, conOpt ...ConditionOption) WhereOption {
+	return func(wb *whereQueryBuild) {
+		column := fmt.Sprintf("%v", colName)
+		wb.table.colValid(column)
+		con := &conditionQuery{table: wb.table}
+		for _, setter := range conOpt {
+			setter(con)
+		}
+		wb.having.isUse = true
+		wb.having.condition = con.ToQuery()
+	}
+}
+func GroupBy(colName string) WhereOption {
+	return func(wb *whereQueryBuild) {
+		column := fmt.Sprintf("%v", colName)
+		wb.table.colValid(column)
+		wb.groupBy.isUse = true
+		wb.groupBy.col = column
 	}
 }
 
-func (wb *whereBuilder) Limit() WhereBuilder {
-	wb.limit = true
-	return wb
+type OrderByMode string
+
+const (
+	ASC  OrderByMode = "ASC"
+	DESC OrderByMode = "DESC"
+)
+
+func OrderBy(colName string, mode OrderByMode) WhereOption {
+	return func(wb *whereQueryBuild) {
+		column := fmt.Sprintf("%v", colName)
+		wb.table.colValid(column)
+		wb.orderBy.isUse = true
+		wb.orderBy.col = column
+		wb.orderBy.mode = mode
+	}
 }
 
-func (wb *whereBuilder) OrderByASC(col string) WhereBuilder {
-	wb.qb.colValid(col)
-	wb.orderBy.isUse = true
-	wb.orderBy.mode = "ASC"
-	wb.orderBy.col = col
-	return wb
-}
-
-func (wb *whereBuilder) OrderByDESC(col string) WhereBuilder {
-	wb.qb.colValid(col)
-	wb.orderBy.isUse = true
-	wb.orderBy.mode = "DESC"
-	wb.orderBy.col = col
-	return wb
-}
-
-func (wb *whereBuilder) ToQuery() string {
-	query := []string{}
-	if wb.condition != nil {
-		query = append(query, "WHERE "+strings.Join(wb.condition, " AND "))
+func newWhereQuery(table tableQuery, prefix string, opts []WhereOption) toQuery {
+	w := &whereQueryBuild{table: table, prefix: prefix}
+	for _, setter := range opts {
+		setter(w)
 	}
-	if wb.having.isUse {
-		query = append(query, wb.having.condition)
-	}
-	if wb.groupBy.isUse {
-		query = append(query, fmt.Sprintf("GROUP BY %s", wb.groupBy.col))
-	}
-	if wb.orderBy.isUse {
-		query = append(query, fmt.Sprintf("ORDER BY %s %s", wb.orderBy.col, wb.orderBy.mode))
-	}
-	if wb.limit {
-		query = append(query, "LIMIT ?,?")
-	}
-	wb.orderBy.isUse = false
-	wb.orderBy.col = ""
-	wb.groupBy.isUse = false
-	wb.groupBy.col = ""
-	wb.having.isUse = false
-	wb.having.condition = ""
-	wb.condition = nil
-	wb.limit = false
-	return strings.Join(query, " ")
+	return w
 }

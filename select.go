@@ -5,76 +5,55 @@ import (
 	"strings"
 )
 
-type SelectQueryBuilder interface {
-	//QueryBuilder
-	Fields(col ...interface{}) SelectQueryBuilder
-	NotCheckFieldValid() SelectQueryBuilder
-	Count() SelectQueryBuilder
-	
-	Where(wb WhereBuilder) IToQuery
-	
-	IToQuery
+type selectQueryBuild struct {
+	table tableQuery
+	field []string
+	asMap map[string]string
 }
 
-func newSelectBuilder(qBuilder *queryBuilder) SelectQueryBuilder {
-	return &selectQueryBuidler{
-		qb:           qBuilder,
-		isCheckField: true,
-	}
+func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
+	return newWhereQuery(s.table, s.ToQuery(), opts)
 }
 
-type selectQueryBuidler struct {
-	qb           *queryBuilder
-	isCheckField bool
-	fields       []string
-	where        string
-}
+type SelectOption func(sq *selectQueryBuild)
 
-func (sqb *selectQueryBuidler) Count() SelectQueryBuilder {
-	return sqb.NotCheckFieldValid().Fields(Count("1"))
-}
-
-func (sqb *selectQueryBuidler) NotCheckFieldValid() SelectQueryBuilder {
-	sqb.isCheckField = false
-	return sqb
-}
-
-func (sqb *selectQueryBuidler) Fields(col ...interface{}) SelectQueryBuilder {
-	if len(col) == 1 && col[0] == "*" {
-		sqb.fields = append(sqb.fields, sqb.qb.col...)
-		return sqb
-	}
-	for _, v := range col {
-		if sqb.isCheckField {
-			sqb.qb.colValid(fmt.Sprint(v))
+func SelectField(list ...interface{}) SelectOption {
+	return func(sq *selectQueryBuild) {
+		for _, v := range list {
+			colStr := fmt.Sprintf("%v", v)
+			if colStr == "*" {
+				sq.field = sq.table.column
+				return
+			}
+			sq.table.colValid(colStr)
+			sq.field = append(sq.field, colStr)
 		}
-		sqb.fields = append(sqb.fields, fmt.Sprint(v))
 	}
-	
-	return sqb
 }
 
-func (sqb *selectQueryBuidler) Where(wb WhereBuilder) IToQuery {
-	sqb.where = wb.ToQuery()
-	return sqb
+func SelectAs(column, as string) SelectOption {
+	return func(sq *selectQueryBuild) {
+		sq.table.colValid(column)
+		sq.asMap[column] = as
+	}
 }
 
-func (sqb *selectQueryBuidler) ToQuery() string {
-	var (
-		query = make([]string, 0, len(sqb.fields)+2)
-		field = ""
-	)
-	if len(sqb.fields) == 0 {
-		return ""
-	} else {
-		field = strings.Join(sqb.fields, ",")
+func (s *selectQueryBuild) ToQuery() string {
+	var value = make([]string, 0, len(s.asMap)+len(s.field))
+	for _, v := range s.field {
+		value = append(value, v)
 	}
-	query = append(query, fmt.Sprintf("SELECT %s FROM %s", field, sqb.qb.tableName))
-	if sqb.where != "" {
-		query = append(query, sqb.where)
+	for k, v := range s.asMap {
+		value = append(value, fmt.Sprintf("%s AS %s", k, v))
 	}
-	sqb.isCheckField = false
-	sqb.fields = nil
-	sqb.where = ""
-	return strings.TrimSpace(strings.Join(query, " "))
+	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(value, ","), s.table.tableName)
+	return query
+}
+
+func newSelect(tb tableQuery, options []SelectOption) *selectQueryBuild {
+	q := &selectQueryBuild{table: tb, asMap: make(map[string]string)}
+	for _, setter := range options {
+		setter(q)
+	}
+	return q
 }
