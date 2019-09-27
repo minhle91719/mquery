@@ -6,16 +6,24 @@ import (
 )
 
 type updateQueryBuild struct {
-	table tableQuery
-	col   []string
-	field map[string]string
+	table         tableQuery
+	col           []string
+	field         map[string]string
+	notCheckField bool
 }
 
 type UpdateOption func(uq *updateQueryBuild)
 
+func NotCheckFieldUpdate() UpdateOption {
+	return func(uq *updateQueryBuild) {
+		uq.notCheckField = true
+	}
+}
 func UpdateField(colName interface{}, value interface{}) UpdateOption {
 	return func(uq *updateQueryBuild) {
-		uq.table.colValid(colName)
+		if !uq.notCheckField {
+			uq.table.colValid(colName)
+		}
 		column := fmt.Sprintf("%v", colName)
 		if value == nil {
 			uq.col = append(uq.col, column)

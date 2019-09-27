@@ -18,6 +18,15 @@ func Distinct(col interface{}) string {
 func Max(col interface{}) string {
 	return fmt.Sprintf("MAX(%s)", col)
 }
+func Now() string {
+	return "NOW()"
+}
+func NULL() string {
+	return "NULL"
+}
+var listToken = []string{
+	"NOW()", "NULL",
+}
 
 func interfaceToString(value interface{}) string {
 	result := ""
@@ -25,6 +34,12 @@ func interfaceToString(value interface{}) string {
 	case int, uint:
 		result = fmt.Sprintf("%d", value)
 	case string:
+		values := fmt.Sprintf("%s", value)
+		for _, v := range listToken {
+			if v == strings.ToUpper(values) {
+				return v
+			}
+		}
 		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
 	case time.Time:
 		result = value.(time.Time).String()

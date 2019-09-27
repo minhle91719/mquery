@@ -13,11 +13,11 @@ type conditionQuery struct {
 
 type ConditionOption func(c *conditionQuery)
 
-func Like(column interface{}, value interface{}) ConditionOption {
+func Like(column interface{}) ConditionOption {
 	return func(wb *conditionQuery) {
 		colStr := fmt.Sprintf("%v", column)
 		wb.table.colValid(colStr)
-		wb.and = append(wb.and, fmt.Sprintf("%s LIKE %s", colStr, value))
+		wb.and = append(wb.and, fmt.Sprintf("%s LIKE ?", colStr))
 	}
 }
 

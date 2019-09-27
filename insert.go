@@ -11,6 +11,8 @@ type insert struct {
 	isIgnore bool
 	isValues bool
 	rows     int64
+	
+	notCheckField bool
 }
 
 func (iq insert) ToQuery() string {
@@ -39,11 +41,18 @@ func (iq insert) ToQuery() string {
 
 type InsertOption func(i *insert)
 
+func NotCheckFieldInsert() InsertOption {
+	return func(i *insert) {
+		i.notCheckField = true
+	}
+}
 func WithField(field ...interface{}) InsertOption {
 	return func(i *insert) {
 		for _, v := range field {
 			f := fmt.Sprintf("%v", v)
-			i.table.colValid(f)
+			if !i.notCheckField {
+				i.table.colValid(f)
+			}
 			i.field = append(i.field, f)
 		}
 	}

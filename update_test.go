@@ -16,7 +16,7 @@ func Test_updateQueryBuilder_ToQuery(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name: "update all",
-			uqb:  qb.Update(UpdateField("username", nil), UpdateField("password", nil)).Where(),
+			uqb:  qb.Update(UpdateField("username", Now()), UpdateField("password", nil)).Where(),
 			want: "UPDATE user SET username = ?,password = ?",
 		},
 		{

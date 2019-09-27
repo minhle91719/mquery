@@ -10,6 +10,7 @@ type selectQueryBuild struct {
 	field   []string
 	asMap   map[string]string
 	isCount bool
+	notCheckField bool
 }
 
 func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
@@ -17,6 +18,11 @@ func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
 }
 
 type SelectOption func(sq *selectQueryBuild)
+func NotCheckField() SelectOption {
+	return func(sq *selectQueryBuild) {
+		sq.notCheckField = true
+	}
+}
 
 func SelectField(list ...interface{}) SelectOption {
 	return func(sq *selectQueryBuild) {
@@ -26,7 +32,10 @@ func SelectField(list ...interface{}) SelectOption {
 				sq.field = sq.table.column
 				return
 			}
-			sq.table.colValid(colStr)
+			if !sq.notCheckField {
+				sq.table.colValid(colStr)
+			}
+
 			sq.field = append(sq.field, colStr)
 		}
 	}
@@ -39,7 +48,9 @@ func SelectAll() SelectOption {
 
 func SelectAs(column, as string) SelectOption {
 	return func(sq *selectQueryBuild) {
-		sq.table.colValid(column)
+		if !sq.notCheckField {
+			sq.table.colValid(column)
+		}
 		sq.asMap[column] = as
 	}
 }
