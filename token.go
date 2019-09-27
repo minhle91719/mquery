@@ -18,9 +18,6 @@ func Distinct(col interface{}) string {
 func Max(col interface{}) string {
 	return fmt.Sprintf("MAX(%s)", col)
 }
-func Count(col interface{}) string {
-	return fmt.Sprintf("COUNT(%s)", col)
-}
 
 func interfaceToString(value interface{}) string {
 	result := ""

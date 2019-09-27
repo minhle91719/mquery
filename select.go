@@ -6,9 +6,10 @@ import (
 )
 
 type selectQueryBuild struct {
-	table tableQuery
-	field []string
-	asMap map[string]string
+	table   tableQuery
+	field   []string
+	asMap   map[string]string
+	isCount bool
 }
 
 func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
@@ -37,14 +38,23 @@ func SelectAs(column, as string) SelectOption {
 		sq.asMap[column] = as
 	}
 }
+func Count() SelectOption {
+	return func(sq *selectQueryBuild) {
+		sq.isCount = true
+	}
+}
 
 func (s *selectQueryBuild) ToQuery() string {
 	var value = make([]string, 0, len(s.asMap)+len(s.field))
-	for _, v := range s.field {
-		value = append(value, v)
-	}
-	for k, v := range s.asMap {
-		value = append(value, fmt.Sprintf("%s AS %s", k, v))
+	if s.isCount {
+		value = append(value,"COUNT(1)")
+	} else {
+		for _, v := range s.field {
+			value = append(value, v)
+		}
+		for k, v := range s.asMap {
+			value = append(value, fmt.Sprintf("%s AS %s", k, v))
+		}
 	}
 	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(value, ","), s.table.tableName)
 	return query
