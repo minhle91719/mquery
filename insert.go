@@ -54,6 +54,7 @@ func WithValues(rows int64) InsertOption {
 		i.rows = rows
 	}
 }
+
 func WithIgnore() InsertOption {
 	return func(i *insert) {
 		i.isIgnore = true

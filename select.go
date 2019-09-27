@@ -31,6 +31,11 @@ func SelectField(list ...interface{}) SelectOption {
 		}
 	}
 }
+func SelectAll() SelectOption {
+	return func(sq *selectQueryBuild) {
+		sq.field = sq.table.column
+	}
+}
 
 func SelectAs(column, as string) SelectOption {
 	return func(sq *selectQueryBuild) {
@@ -47,7 +52,7 @@ func Count() SelectOption {
 func (s *selectQueryBuild) ToQuery() string {
 	var value = make([]string, 0, len(s.asMap)+len(s.field))
 	if s.isCount {
-		value = append(value,"COUNT(1)")
+		value = append(value, "COUNT(1)")
 	} else {
 		for _, v := range s.field {
 			value = append(value, v)
