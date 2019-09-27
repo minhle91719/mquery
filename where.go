@@ -71,7 +71,7 @@ func Condition(conOpt ...ConditionOption) WhereOption {
 			setter(con)
 		}
 		query := con.ToQuery()
-		if query != "" {
+		if query != " " {
 			wb.condition = append(wb.condition, con.ToQuery())
 		}
 	}
