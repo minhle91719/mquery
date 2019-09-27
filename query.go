@@ -54,8 +54,13 @@ func Column(value ...interface{}) TableOption {
 
 func WithLogger(l *logrus.Entry) TableOption {
 	return func(q *tableQuery) {
-		q.isLogger = true
-		q.logger = l
+		if l != nil {
+			q.isLogger = true
+			q.logger = l.WithFields(logrus.Fields{
+				"infra": "mysql",
+				"table": q.tableName,
+			})
+		}
 	}
 }
 
