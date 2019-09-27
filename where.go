@@ -35,7 +35,6 @@ func (w whereQueryBuild) ToQuery() string {
 	var query = make([]string, 0, 6)
 	query = append(query, w.prefix)
 	if len(w.condition) > 0 {
-		w.table.logger.Info(len(w.condition), w.condition)
 		query = append(query, "WHERE "+strings.Join(w.condition, " AND "))
 	}
 	if w.having.isUse {
@@ -74,7 +73,7 @@ func Condition(conOpt ...ConditionOption) WhereOption {
 		if query == "" {
 			return
 		}
-		wb.condition = append(wb.condition, con.ToQuery())
+		wb.condition = append(wb.condition, query)
 	}
 }
 func Having(colName string, conOpt ...ConditionOption) WhereOption {
