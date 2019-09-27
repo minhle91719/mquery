@@ -71,9 +71,10 @@ func Condition(conOpt ...ConditionOption) WhereOption {
 			setter(con)
 		}
 		query := con.ToQuery()
-		if query != " " {
-			wb.condition = append(wb.condition, con.ToQuery())
+		if query == "" {
+			return
 		}
+		wb.condition = append(wb.condition, con.ToQuery())
 	}
 }
 func Having(colName string, conOpt ...ConditionOption) WhereOption {
