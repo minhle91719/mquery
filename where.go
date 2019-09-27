@@ -34,7 +34,7 @@ type whereQueryBuild struct {
 func (w whereQueryBuild) ToQuery() string {
 	var query = make([]string, 0, 6)
 	query = append(query, w.prefix)
-	if w.condition != nil {
+	if len(w.condition) > 0 {
 		query = append(query, "WHERE "+strings.Join(w.condition, " AND "))
 	}
 	if w.having.isUse {
