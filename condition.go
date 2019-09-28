@@ -2,6 +2,7 @@ package mquery
 
 import (
 	"fmt"
+	"html"
 	"strings"
 )
 
@@ -13,11 +14,13 @@ type conditionQuery struct {
 
 type ConditionOption func(c *conditionQuery)
 
-func Like(column interface{}) ConditionOption {
+func Like(column interface{}, value interface{}) ConditionOption {
 	return func(wb *conditionQuery) {
 		colStr := fmt.Sprintf("%v", column)
 		wb.table.colValid(colStr)
-		wb.and = append(wb.and, fmt.Sprintf("%s LIKE ?", colStr))
+		valuee := fmt.Sprintf("%v", value)
+		valuee = "'%" + html.EscapeString(valuee) + "%'"
+		wb.and = append(wb.and, fmt.Sprintf("%s LIKE %s", colStr, valuee))
 	}
 }
 
