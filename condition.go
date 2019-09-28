@@ -19,6 +19,9 @@ func Like(column interface{}, value interface{}) ConditionOption {
 		colStr := fmt.Sprintf("%v", column)
 		wb.table.colValid(colStr)
 		valuee := fmt.Sprintf("%v", value)
+		if valuee == "" {
+			return
+		}
 		valuee = "'%" + html.EscapeString(valuee) + "%'"
 		wb.and = append(wb.and, fmt.Sprintf("%s LIKE %s", colStr, valuee))
 	}
