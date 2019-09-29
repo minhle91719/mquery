@@ -12,6 +12,10 @@ type tableQuery struct {
 	logger    *logrus.Entry
 }
 
+func (tb tableQuery) Delete(opts ...WhereOption) toQuery {
+	return newWhereQuery(tb, fmt.Sprintf("DELETE FROM %s", tb.tableName), opts)
+}
+
 func (tb tableQuery) Select(opts ...SelectOption) WhereQuery {
 	return newSelect(tb, opts)
 }
@@ -76,6 +80,7 @@ type QueryBuild interface {
 	Insert(opts ...InsertOption) toQuery
 	Select(opts ...SelectOption) WhereQuery
 	Update(opts ...UpdateOption) WhereQuery
+	Delete(opts ...WhereOption) toQuery
 }
 
 type WhereQuery interface {
