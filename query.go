@@ -32,7 +32,7 @@ func (tb tableQuery) colValid(name interface{}) {
 			return
 		}
 	}
-	panic("column " + col + " not exist . Please check " + tb.tableName + " QueryBuilder")
+	logrus.Fatal("column " + col + " not exist . Please check " + tb.tableName + " QueryBuilder")
 }
 func (tb tableQuery) Insert(options ...InsertOption) toQuery {
 	return newInsert(tb, options)
