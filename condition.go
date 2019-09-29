@@ -60,6 +60,27 @@ func And(field interface{}, ops Operator, value ...interface{}) ConditionOption 
 		wb.and = append(wb.and, fmt.Sprintf("%s %s %s", field, ops, interfaceToString(v)))
 	}
 }
+func AndPair(field []interface{}, value ...interface{}) ConditionOption {
+	return func(c *conditionQuery) {
+		for _, v := range field {
+			c.table.colValid(v)
+		}
+		key := make([]string, 0, len(field))
+		for _, v := range field {
+			key = append(key, interfaceToString(v))
+		}
+		param := genValueParam(len(field))
+		if len(value) == len(field) {
+			var values = make([]string, 0, len(value))
+			for _, v := range value {
+				values = append(values, interfaceToString(v))
+			}
+			param = "(" + strings.Join(values, ",") + ")"
+		}
+		c.and = append(c.and, fmt.Sprintf("(%s) = %s", strings.Join(key, ","), param))
+	}
+}
+
 func Or(field interface{}, ops Operator, value ...interface{}) ConditionOption {
 	return func(wb *conditionQuery) {
 		wb.table.colValid(field)
