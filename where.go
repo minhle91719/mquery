@@ -10,8 +10,8 @@ type whereQueryBuild struct {
 	
 	prefix    string
 	condition []string
-	
-	limit struct {
+	forUpdate bool
+	limit     struct {
 		isUse  bool
 		offset int64
 		size   int64
@@ -49,12 +49,21 @@ func (w whereQueryBuild) ToQuery() string {
 	if w.limit.isUse {
 		query = append(query, fmt.Sprintf("LIMIT %d,%d", w.limit.offset, w.limit.size))
 	}
+	if w.forUpdate {
+		query = append(query, "FOR UPDATE")
+	}
 	q := strings.Join(query, " ")
 	w.table.logQuery(q)
 	return q
 }
 
 type WhereOption func(wb *whereQueryBuild)
+
+func ForUpdate() WhereOption {
+	return func(wb *whereQueryBuild) {
+		wb.forUpdate = true
+	}
+}
 
 func Limit(offset, size int64) WhereOption {
 	return func(wb *whereQueryBuild) {
