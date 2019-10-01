@@ -70,7 +70,7 @@ func WithValues(rows int64) InsertOption {
 		i.rows = rows
 	}
 }
-func OnDuplicate(listValue map[string]interface{}) InsertOption {
+func OnDuplicate(listValue map[interface{}]interface{}) InsertOption {
 	return func(i *insert) {
 		i.onDuplicate.isUse = true
 		for k, v := range listValue {
