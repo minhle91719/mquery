@@ -13,6 +13,10 @@ type insert struct {
 	rows     int64
 	
 	notCheckField bool
+	onDuplicate   struct {
+		isUse    bool
+		mapValue []string
+	}
 }
 
 func (iq insert) ToQuery() string {
@@ -33,6 +37,9 @@ func (iq insert) ToQuery() string {
 		}
 	}
 	q := fmt.Sprintf("%s INTO %s(%s) %s%s", insertType, iq.table.tableName, strings.Join(iq.field, ","), valueQuery, strings.Join(values, ","))
+	if iq.onDuplicate.isUse {
+		q += " ON DUPLICATE KEY UPDATE " + strings.Join(iq.onDuplicate.mapValue, ", ")
+	}
 	if iq.table.isLogger {
 		iq.table.logger.Infof(q)
 	}
@@ -61,6 +68,17 @@ func WithValues(rows int64) InsertOption {
 	return func(i *insert) {
 		i.isValues = true
 		i.rows = rows
+	}
+}
+func OnDuplicate(listValue map[string]interface{}) InsertOption {
+	return func(i *insert) {
+		i.onDuplicate.isUse = true
+		for k, v := range listValue {
+			if !i.notCheckField {
+				i.table.colValid(k)
+			}
+			i.onDuplicate.mapValue = append(i.onDuplicate.mapValue, fmt.Sprintf("%s = %s", k, interfaceToString(v)))
+		}
 	}
 }
 

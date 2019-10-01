@@ -24,7 +24,7 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 	}{
 		{
 			name: "select with field",
-			sqb:  qb.Select(SelectField("id","username","password")).Where(Condition(AndPair([]interface{}{
+			sqb:  qb.Select(SelectField("id","username","password")).Where(Condition(Pair(false,[]interface{}{
 				"status","status","status",
 			},1,2,3))),
 			want: "SELECT id,username,password FROM user",

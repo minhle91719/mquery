@@ -14,12 +14,14 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 	}{
 		{
 			name: "insert value",
-			iqb:  qb.Insert(WithField("username", "password")),
+			iqb: qb.Insert(WithField("username", "password"), OnDuplicate(map[string]interface{}{
+				"username": "hahah",
+			})),
 			want: `INSERT INTO user(username,password) VALUE(?,?)`,
 		},
 		{
 			name: "insert 2 value",
-			iqb:  qb.Insert(WithField("username", "password"),WithValues(2)),
+			iqb:  qb.Insert(WithField("username", "password"), WithValues(2)),
 			want: `INSERT INTO user(username,password) VALUES(?,?),(?,?)`,
 		},
 	}
