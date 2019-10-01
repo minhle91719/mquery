@@ -59,12 +59,6 @@ func (w whereQueryBuild) ToQuery() string {
 
 type WhereOption func(wb *whereQueryBuild)
 
-func ForUpdate() WhereOption {
-	return func(wb *whereQueryBuild) {
-		wb.forUpdate = true
-	}
-}
-
 func Limit(offset, size int64) WhereOption {
 	return func(wb *whereQueryBuild) {
 		wb.limit.isUse = true
@@ -122,7 +116,11 @@ func OrderBy(colName string, mode OrderByMode) WhereOption {
 		wb.orderBy.mode = mode
 	}
 }
-
+func forUpdate() WhereOption {
+	return func(wb *whereQueryBuild) {
+		wb.forUpdate = true
+	}
+}
 func newWhereQuery(table tableQuery, prefix string, opts []WhereOption) toQuery {
 	w := &whereQueryBuild{table: table, prefix: prefix}
 	for _, setter := range opts {

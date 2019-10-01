@@ -6,18 +6,29 @@ import (
 )
 
 type selectQueryBuild struct {
-	table   tableQuery
-	field   []string
-	asMap   map[string]string
-	isCount bool
+	table         tableQuery
+	field         []string
+	asMap         map[string]string
+	isCount       bool
 	notCheckField bool
+	isForUpdate   bool
 }
 
 func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
+	if s.isForUpdate {
+		opts = append(opts, forUpdate())
+	}
 	return newWhereQuery(s.table, s.ToQuery(), opts)
 }
 
 type SelectOption func(sq *selectQueryBuild)
+
+func ForUpdate() SelectOption {
+	return func(wb *selectQueryBuild) {
+		wb.isForUpdate = true
+	}
+}
+
 func NotCheckField() SelectOption {
 	return func(sq *selectQueryBuild) {
 		sq.notCheckField = true
@@ -35,7 +46,7 @@ func SelectField(list ...interface{}) SelectOption {
 			if !sq.notCheckField {
 				sq.table.colValid(colStr)
 			}
-
+			
 			sq.field = append(sq.field, colStr)
 		}
 	}
