@@ -24,6 +24,7 @@ func Now() string {
 func NULL() string {
 	return "NULL"
 }
+
 var listToken = []string{
 	"NOW()", "NULL",
 }
@@ -42,7 +43,7 @@ func interfaceToString(value interface{}) string {
 		}
 		result = fmt.Sprintf(`"%s"`, html.EscapeString(fmt.Sprintf("%s", value)))
 	case time.Time:
-		result = value.(time.Time).String()
+		result = `"` + value.(time.Time).String() + `"`
 	case bool:
 		result = fmt.Sprint(value)
 	case nil:
