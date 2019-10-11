@@ -69,7 +69,7 @@ func Pair(isAnd bool, field []interface{}, value ...interface{}) ConditionOption
 		for _, v := range field {
 			key = append(key, fmt.Sprintf("%s", v))
 		}
-		param := genValueParam(len(field))
+		param := genValueParam(len(field)) // for database/sql
 		if len(value) == len(field) {
 			var values = make([]string, 0, len(value))
 			for _, v := range value {

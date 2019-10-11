@@ -1,11 +1,18 @@
 package mquery
 
 import (
+	"fmt"
 	"testing"
 )
 
 func Test_insertQueryBuilder_ToQuery(t *testing.T) {
-	test:=  NewQueryBuilder("haha",, Column("perm", )
+	test := NewQueryBuilder("haha", Column("perm"))
+	var condition = []ConditionOption{}
+	condition = append(condition, Pair(false, []interface{}{
+		"perm",
+	}, "read"))
+	fmt.Println(test.Update(UpdateField("perm", 1)).Where(Condition(condition...)).ToQuery())
+	fmt.Println()
 	//test.Select()
 	qb := NewQueryBuilder("user", Column("id",
 		"username",
@@ -18,7 +25,7 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 	}{
 		{
 			name: "insert value",
-			iqb: qb.Insert(WithField("username", "password"), OnDuplicate(map[string]interface{}{
+			iqb: qb.Insert(WithField("username", "password"), OnDuplicate(map[interface{}]interface{}{
 				"username": "hahah",
 			})),
 			want: `INSERT INTO user(username,password) VALUE(?,?)`,
