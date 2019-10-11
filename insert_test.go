@@ -1,8 +1,12 @@
 package mquery
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_insertQueryBuilder_ToQuery(t *testing.T) {
+	test:=  NewQueryBuilder("haha",, Column("perm", )
+	//test.Select()
 	qb := NewQueryBuilder("user", Column("id",
 		"username",
 		"password",

@@ -67,7 +67,7 @@ func Pair(isAnd bool, field []interface{}, value ...interface{}) ConditionOption
 		}
 		key := make([]string, 0, len(field))
 		for _, v := range field {
-			key = append(key, interfaceToString(v))
+			key = append(key, fmt.Sprintf("%s", v))
 		}
 		param := genValueParam(len(field))
 		if len(value) == len(field) {
