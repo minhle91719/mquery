@@ -16,7 +16,7 @@ func (tb tableQuery) Delete(opts ...WhereOption) toQuery {
 	return newWhereQuery(tb, fmt.Sprintf("DELETE FROM %s", tb.tableName), opts)
 }
 
-func (tb tableQuery) Select(opts ...SelectOption) WhereQuery {
+func (tb tableQuery) Select(opts ...SelectOption) FromQuery {
 	return newSelect(tb, opts)
 }
 
@@ -78,13 +78,17 @@ func NewQueryBuilder(tableName string, options ...TableOption) QueryBuild {
 
 type QueryBuild interface {
 	Insert(opts ...InsertOption) toQuery
-	Select(opts ...SelectOption) WhereQuery
+	Select(opts ...SelectOption) FromQuery
 	Update(opts ...UpdateOption) WhereQuery
 	Delete(opts ...WhereOption) toQuery
+}
+type FromQuery interface {
+	From(...FromOption) WhereQuery
 }
 
 type WhereQuery interface {
 	Where(...WhereOption) toQuery
+	toQuery
 }
 
 type toQuery interface {

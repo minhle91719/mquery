@@ -11,7 +11,7 @@ func Test_insertQueryBuilder_ToQuery(t *testing.T) {
 	condition = append(condition, Pair(false, []interface{}{
 		"perm",
 	}, "read"))
-	fmt.Println(test.Update(UpdateField("perm", 1)).Where(Condition(condition...)).ToQuery())
+	fmt.Println(test.Update(NotCheckFieldUpdate(),UpdateField("perm", NULL())).Where(Condition(condition...)).ToQuery())
 	fmt.Println()
 	//test.Select()
 	qb := NewQueryBuilder("user", Column("id",

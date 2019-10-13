@@ -24,41 +24,41 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 	}{
 		{
 			name: "select with field",
-			sqb:  qb.Select(SelectField("id","username","password")).Where(Condition(Pair(false,[]interface{}{
+			sqb:  qb.Select(SelectField("id","username","password")).From().Where(Condition(Pair(false,[]interface{}{
 				"status","status","status",
 			},1,2,3))),
 			want: "SELECT id,username,password FROM user",
 		},
 		{
 			name: "select where and",
-			sqb:  qb.Select(SelectField("username", "password")).Where(Condition(And("id", EqualOps, 5))),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(Condition(And("id", EqualOps, 5))),
 			want: "SELECT username,password FROM user WHERE id = 5",
 		},
 		{
 			name: "select where or",
-			sqb:  qb.Select(SelectField("username", "password")).Where(Condition(Or("id", EqualOps, 5))),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(Condition(Or("id", EqualOps, 5))),
 			want: "SELECT username,password FROM user WHERE id = 5",
 		},
 		{
 			name: "select where and or mix",
-			sqb:  qb.Select(SelectField("username", "password")).Where(Condition(And("id", EqualOps, 5), And("password", EqualOps, "haha"), Or("username", EqualOps, "hahaha"))),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(Condition(And("id", EqualOps, 5), And("password", EqualOps, "haha"), Or("username", EqualOps, "hahaha"))),
 			want: "SELECT username,password FROM user WHERE id = 5 AND password = \"haha\" OR username = \"hahaha\"",
 		},
 		{
 			name: "select order by ASC",
-			sqb:  qb.Select(SelectField("username", "password")).Where(OrderBy("username", ASC)),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(OrderBy("username", ASC)),
 			want: "SELECT username,password FROM user ORDER BY username ASC",
 		}, {
 			name: "select order by DESC",
-			sqb:  qb.Select(SelectField("username", "password")).Where(OrderBy("username", DESC)),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(OrderBy("username", DESC)),
 			want: "SELECT username,password FROM user ORDER BY username DESC",
 		},
 		{
 			name: "select IN 2 key",
-			sqb: qb.Select(SelectField("id_order_logging", "id_order", "status", "created_at")).
+			sqb: qb.Select(SelectField("id_order_logging", "id_order", "status", "created_at")).From().
 				Where(
 					Condition(
-						In(qb.Select(SelectField(Distinct("id_order"), Max("created_at"))).Where(GroupBy("id_order")).ToQuery(), "id_order", "created_at"),
+						In(qb.Select(SelectField(Distinct("id_order"), Max("created_at"))).From().Where(GroupBy("id_order")).ToQuery(), "id_order", "created_at"),
 						And("status", EqualOps, "retry")),
 				),
 			want: "SELECT id_order_logging,id_order,status,created_at FROM user WHERE " +
@@ -66,12 +66,12 @@ func Test_selectQueryBuidler_ToQuery(t *testing.T) {
 		},
 		{
 			name: "select IN",
-			sqb:  qb.Select(SelectField("username", "password")).Where(Condition(In("1,2,3,4,5", "id"))),
+			sqb:  qb.Select(SelectField("username", "password")).From().Where(Condition(In("1,2,3,4,5", "id"))),
 			want: "SELECT username,password FROM user WHERE (id) IN (1,2,3,4,5)",
 		}, {
 			name: "select IN Nested",
-			sqb: qb.Select(SelectField("username", "password")).
-				Where(Condition(In(qb.Select(SelectField("id")).Where(Condition(And("id", EqualOps))).ToQuery(), "id"))),
+			sqb: qb.Select(SelectField("username", "password")).From().
+				Where(Condition(In(qb.Select(SelectField("id")).From().Where(Condition(And("id", EqualOps))).ToQuery(), "id"))),
 			want: "SELECT username,password FROM user WHERE (id) IN (SELECT id FROM user WHERE id = ?)",
 		},
 	}

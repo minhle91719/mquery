@@ -1,8 +1,10 @@
 package mquery
 
-import "testing"
+import (
+	"testing"
+)
 
-func Test_updateQueryBuilder_ToQuery(t *testing.T) {
+func TestFromAs(t *testing.T) {
 	qb := NewQueryBuilder("user", Column(
 		"id",
 		"username",
@@ -15,14 +17,14 @@ func Test_updateQueryBuilder_ToQuery(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{
-			name: "update all",
-			uqb:  qb.Update(UpdateField("username", Now()), UpdateField("password", nil)).Where(),
-			want: "UPDATE user SET username = ?,password = ?",
+			name: "select from table all",
+			uqb:  qb.Select(SelectField("username")).From(),
+			want: "SELECT username FROM user",
 		},
 		{
-			name: "update where",
-			uqb:  qb.Update(UpdateField("username", "haha"), UpdateField("password", 5)).Where(Condition(And("id", EqualOps, 5))),
-			want: "UPDATE user SET username = \"haha\",password = 5 WHERE id = 5",
+			name: "from ass",
+			uqb:  qb.Select(SelectField("username")).From(FromAs(qb.Select(SelectAll()).From().ToQuery(), "ids")),
+			want: "SELECT username FROM (SELECT id,username,password,balance FROM user) as ids",
 		}, {
 			name: "update where nested",
 			want: `UPDATE user SET username = "haha",password = 5 WHERE id = 5 AND (id) IN (SELECT id FROM user WHERE id < 5)`,

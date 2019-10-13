@@ -14,11 +14,8 @@ type selectQueryBuild struct {
 	isForUpdate   bool
 }
 
-func (s selectQueryBuild) Where(opts ...WhereOption) toQuery {
-	if s.isForUpdate {
-		opts = append(opts, forUpdate())
-	}
-	return newWhereQuery(s.table, s.ToQuery(), opts)
+func (s selectQueryBuild) From(opts ...FromOption) WhereQuery {
+	return newFromQuery(s.table, s.isForUpdate, s.ToQuery(), opts)
 }
 
 type SelectOption func(sq *selectQueryBuild)
@@ -83,7 +80,7 @@ func (s *selectQueryBuild) ToQuery() string {
 			value = append(value, fmt.Sprintf("%s AS %s", k, v))
 		}
 	}
-	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(value, ","), s.table.tableName)
+	query := fmt.Sprintf("SELECT %s", strings.Join(value, ","))
 	return query
 }
 
