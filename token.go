@@ -48,6 +48,8 @@ func interfaceToString(value interface{}) string {
 		result = fmt.Sprint(value)
 	case nil:
 		result = "?"
+	case toQuery:
+		result = value.(toQuery).ToQuery()
 	default:
 		return fmt.Sprint(value)
 	}

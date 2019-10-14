@@ -29,7 +29,7 @@ func TestFromAs(t *testing.T) {
 			name: "update where nested",
 			want: `UPDATE user SET username = "haha",password = 5 WHERE id = 5 AND (id) IN (SELECT id FROM user WHERE id < 5)`,
 			uqb: qb.Update(UpdateField("username", "haha"), UpdateField("password", 5)).Where(
-				Condition(And("id", EqualOps, 5), In(qb.Select(SelectField("id")).From().Where(Condition(And("id", LessOps, 5))).ToQuery(), "id")),
+				Condition(And("id", EqualOps, 5), In([]interface{}{qb.Select(SelectField("id")).From().Where(Condition(And("id", LessOps, 5))).ToQuery()}, "id")),
 			),
 		},
 	}
