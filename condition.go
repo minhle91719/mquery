@@ -27,7 +27,7 @@ func Like(column interface{}, value interface{}) ConditionOption {
 	}
 }
 
-func In(selectIn string, col ...interface{}) ConditionOption {
+func In(selectIn []interface{}, col ...interface{}) ConditionOption {
 	return func(wb *conditionQuery) {
 		colStr := make([]string, 0, len(col))
 		for _, v := range col {
@@ -35,7 +35,11 @@ func In(selectIn string, col ...interface{}) ConditionOption {
 			wb.table.colValid(column)
 			colStr = append(colStr, column)
 		}
-		wb.and = append(wb.and, fmt.Sprintf("(%s) IN (%s)", strings.Join(colStr, ","), selectIn))
+		valueIn := make([]string, 0, len(selectIn))
+		for _, v := range selectIn {
+			valueIn = append(valueIn, interfaceToString(v))
+		}
+		wb.and = append(wb.and, fmt.Sprintf("(%s) IN (%s)", strings.Join(colStr, ","), strings.Join(valueIn, ",")))
 	}
 }
 
