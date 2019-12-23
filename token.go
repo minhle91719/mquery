@@ -22,11 +22,11 @@ func Now() string {
 	return "NOW()"
 }
 func NULL() string {
-	return "NULL"
+	return "null"
 }
 
 var listToken = []string{
-	"NOW()", "NULL",
+	"NOW()", "null",
 }
 
 func interfaceToString(value interface{}) string {
